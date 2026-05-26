@@ -148,7 +148,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
     st.markdown("<hr style='margin:15px 0; border-color:#334155;' />", unsafe_allow_html=True)
     st.markdown("##### 🧠 Unsupervised Clustering (Scikit-Learn)")
     
-    numeric_cols = [c for c, dtype in schema.items() if "int" in dtype or "float" in dtype]
+    numeric_cols = [c for c, dtype in schema.items() if "int" in dtype.lower() or "float" in dtype.lower()]
     
     col_c1, col_c2 = st.columns([3, 1])
     with col_c1:
@@ -166,7 +166,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
     # Anchor columns to select for Tree hierarchy
     st.markdown("<hr style='margin:15px 0; border-color:#334155;' />", unsafe_allow_html=True)
     st.markdown("##### 🌳 Hierarchical Tree Settings")
-    string_cols = [c for c, dtype in schema.items() if "str" in dtype or "utf8" in dtype]
+    string_cols = [c for c, dtype in schema.items() if "str" in dtype.lower() or "utf8" in dtype.lower()]
     
     selected_tree_cols = st.multiselect(
         "Select Categorical Columns to group Hierarchically",
@@ -245,8 +245,11 @@ def render_filters_container(api_client: AntigravityAPIClient):
                     help="Select variable for the horizontal X-axis."
                 )
             with col_g2:
+                y_options = [c for c in g_cols if c in numeric_cols]
+                if not y_options:
+                    y_options = g_cols
                 y_axis = st.selectbox(
-                    "Y-Axis Column (Numeric)", [c for c in g_cols if c in numeric_cols], index=0 if [c for c in g_cols if c in numeric_cols] else None,
+                    "Y-Axis Column (Numeric)", y_options, index=0 if y_options else None,
                     help="Select numeric variable for the vertical Y-axis."
                 )
             with col_g3:
