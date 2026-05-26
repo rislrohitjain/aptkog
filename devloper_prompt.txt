@@ -1,0 +1,88 @@
+Project Path : D:\projects\python\aptkog
+Project Folder : aptkog
+
+# Role & Context
+You are a Senior Python Software Architect. You are tasked with developing "Antigravity 2.0" — an Advanced Local Data Analytics Engine. 
+
+Complete codes multi agents base like approx 15 agents for development life cycle
+
+The application must follow a strict decoupled architecture:
+1. Backend: Fast-API driven, acting entirely as a stateless REST API using Polars, LangChain, and Scikit-Learn.
+2. Frontend: A pure Python interactive UI built using Streamlit, interacting with the backend purely via API endpoints (Zero Client-Side JavaScript).
+
+# System Constraints & Environment
+- Environment Variables: All configurations (Port, Host, Upload Directories, Logging levels) must be managed via a `.env` file.
+- File Restrictions: Max size per Excel file is 500 MB. The system must process files up to this size locally and efficiently.
+- Data Processing: Use Polars exclusively instead of Pandas for vectorized, multi-threaded operations.
+
+---
+
+## Task 1: Project Blueprint & Setup Structure
+
+Generate the exact project folder structure. It must strictly follow this pattern:
+
+antigravity-2.0/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py            # FastAPI entrypoint
+│   │   ├── config.py          # Pydantic BaseSettings loading .env
+│   │   ├── api/               # API Routers (ingestion, filter, pivot, join)
+│   │   ├── services/          # Core Polars, LangChain, Sklearn logic
+│   │   └── utils/             # System resource diagnostics
+│   ├── Requirements.txt
+│   └── .env.example
+├── frontend/
+│   ├── app.py                 # Streamlit entrypoint
+│   ├── components/            # UI components (Sidebar, Tabs, Filter Panel)
+│   ├── api_client.py          # HTTP Client talking to Backend API
+│   └── requirements.txt
+└── postman/
+    └── antigravity_2.0_collection.json  # Postman API Collection
+
+Provide the complete `requirements.txt` for both backend and frontend, and a production `.env.example` file that handles the 500MB upload limit restrictions (`MAX_CONTENT_LENGTH`).
+
+---
+
+## Task 2: Backend API Implementation (FastAPI)
+
+Write the Python code for the Backend API. It must expose the following structural modules via endpoints:
+
+1. Data Ingestion (`/api/upload`): Accepts up to 10 `.xlsx` files (max 500MB each). Parses metadata, file names, and sheet names. Saves files to a secure local temp directory.
+2. Universal Filter Engine (`/api/filter`): Accepts a JSON payload containing data filters. Must implement at least 15 distinct comparison operators (`=`, `!=`, `Like`, `Contains`, `Starts With`, `Ends With`, `reg_expr`, `Wildcards`, `>`, `<`, `>=`, `<=`, `Is Null`, `Is Not Null`) mapped to Polars syntax. Returns metrics (`total_records` vs `filtered_records`) and JSON data payloads for Table, Graph, and Tree views.
+3. Dynamic Pivot Engine (`/api/pivot`): Executes user-defined aggregations (Sum, Mean, Count, Max, Min) on Polars dataframes based on row indices, column groupings, and values.
+4. Vectorized Dataset Builder (`/api/join`): Simulates VLOOKUP / INDEX-MATCH relational joins across separate uploaded files. Returns a downloadable binary stream of the consolidated Excel file.
+5. Infrastructure Diagnostics (`/api/diagnostics`): Uses `psutil` and system checks to return real-time local RAM consumption (MB), CPU usage %, active Python compiler state, and Polars SIMD optimization status.
+
+---
+
+## Task 3: Frontend Implementation (Streamlit - Zero JS)
+
+Write the Frontend application code using Streamlit. It must communicate exclusively with the backend via HTTP requests (using `api_client.py`).
+
+- Global Sidebar Navigation: 
+  - Permanently display: "Developer: Rohit Jain"
+  - Interactive anchor links/buttons to jump to different workspace blocks.
+- UI Blocks (Enclosed in independent, expandable/collapsible containers `st.expander`):
+  - Ingestion Container: Multi-file upload component. Renders a Multi-Tier Nested Tab Navigation layout.
+    - Tier 1: Horizontal tabs for File Names (e.g., personal_details, education_details).
+    - Tier 2 (Nested): Dynamic sub-tabs reflecting individual sheets within that file (e.g., gender, family, 10th, 12th).
+  - Filtering & Tri-View Container: Layout housing the 15-operator filter controls, continuous metric bars, and three dynamic views: Table View, Visual Graph View (via Plotly), and structural Tree View.
+  - Pivot Engine Container: Drag-and-drop-style multi-selects for rows, columns, and metric aggregations.
+  - Dataset Builder Container: Dropdowns to pick File A, File B, join keys, and multi-select columns to extract, paired with a "Download as Excel" execution button.
+  - Diagnostic Panel: A bottom-docked expander polling the backend diagnostics endpoint to display hardware performance and local privacy validation status.
+
+---
+
+## Task 4: Postman v2.1 Collection JSON Document
+
+Generate a raw, completely valid, escape-string formatted JSON structure representing a Postman Collection. The user must be able to copy this block, save it as `antigravity_2.0_collection.json`, and import it directly into Postman.
+
+The collection must include pre-configured API requests for:
+- `POST /api/upload` (with multi-part form data placeholder)
+- `POST /api/filter` (with raw JSON body showing a complex regex and numeric filter example)
+- `POST /api/pivot` (with raw JSON body specifying rows, columns, and operations)
+- `POST /api/join` (with relational join config JSON payload)
+- `GET /api/diagnostics`
+
+Ensure code clarity, strict type-hinting, proper logging configuration, and complete error handling (e.g., handling missing files, large files, or invalid Polars parsing queries). Write modular code.

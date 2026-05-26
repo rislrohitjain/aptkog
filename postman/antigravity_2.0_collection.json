@@ -1,0 +1,156 @@
+{
+  "info": {
+    "_postman_id": "4a7b5e9f-7a2e-4bca-9ef6-4fdfa8c51a02",
+    "name": "Antigravity 2.0 API Collection",
+    "description": "Stateless REST API endpoints for Antigravity 2.0 Advanced Local Data Analytics Engine.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Data Ingestion - Upload Excel Files",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "files",
+              "description": "Excel file to upload (Max 10 files, up to 500MB each)",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/upload",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "upload"
+          ]
+        },
+        "description": "Accepts up to 10 .xlsx files. Parses sheet names and metadata, then saves them locally to temp directory."
+      },
+      "response": []
+    },
+    {
+      "name": "Universal Filter Engine - Complex Query",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filepath\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name\": \"Q1\",\n  \"filters\": [\n    {\n      \"column\": \"Country\",\n      \"operator\": \"Like\",\n      \"value\": \"%germany%\"\n    },\n    {\n      \"column\": \"Revenue\",\n      \"operator\": \">=\",\n      \"value\": 5000\n    },\n    {\n      \"column\": \"Email\",\n      \"operator\": \"reg_expr\",\n      \"value\": \"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}\"\n    }\n  ],\n  \"tree_group_cols\": [\n    \"Region\",\n    \"Country\"\n  ],\n  \"cluster_cols\": [\n    \"Revenue\",\n    \"UnitsSold\"\n  ],\n  \"cluster_count\": 3\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/filter",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "filter"
+          ]
+        },
+        "description": "Accepts filter parameters, executes K-Means clustering, and returns Table, Plotly Graph, and Tree hierarchy structures."
+      },
+      "response": []
+    },
+    {
+      "name": "Dynamic Pivot Engine",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filepath\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name\": \"Q1\",\n  \"index\": [\n    \"Region\",\n    \"Country\"\n  ],\n  \"columns\": [\n    \"Category\"\n  ],\n  \"values\": \"Revenue\",\n  \"agg\": \"Sum\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/pivot",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "pivot"
+          ]
+        },
+        "description": "Runs pivot calculations (Sum, Mean, Count, Max, Min) on Polars DataFrames."
+      },
+      "response": []
+    },
+    {
+      "name": "Vectorized Dataset Builder - Relational Join",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"filepath_a\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name_a\": \"Q1\",\n  \"filepath_b\": \"./temp_uploads/customer_profiles.xlsx\",\n  \"sheet_name_b\": \"Customers\",\n  \"join_key_a\": \"CustomerID\",\n  \"join_key_b\": \"CustID\",\n  \"join_type\": \"left\",\n  \"select_columns_b\": [\n    \"CustomerName\",\n    \"Email\",\n    \"Segment\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8000/api/join",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "join"
+          ]
+        },
+        "description": "Performs multi-threaded Polars join mimicking VLOOKUP, and exports consolidated binary Excel spreadsheet."
+      },
+      "response": []
+    },
+    {
+      "name": "System diagnostics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/api/diagnostics",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "api",
+            "diagnostics"
+          ]
+        },
+        "description": "Gathers current process RAM usage, CPU %, active compiler, and Polars SIMD optimization flags."
+      },
+      "response": []
+    }
+  ]
+}
