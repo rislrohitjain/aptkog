@@ -11,8 +11,8 @@ def render_pivot_container(api_client: AntigravityAPIClient):
     st.markdown(
         """
         <div style="margin-bottom: 15px;">
-            <h3 style="margin:0; color:#5B21B6; font-size:20px;">📊 Dynamic Pivot Engine</h3>
-            <p style="margin: 2px 0 10px 0; color:#6B7280; font-size:14px;">Simulate drag-and-drop multidimensional analysis by grouping rows and columns.</p>
+            <h3 style="margin:0; color:#6366F1; font-size:20px;">📊 Dynamic Pivot Engine</h3>
+            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Simulate drag-and-drop multidimensional loan analysis by grouping branch metrics and calculating averages or totals.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -43,36 +43,41 @@ def render_pivot_container(api_client: AntigravityAPIClient):
     
     with col_p1:
         row_indices = st.multiselect(
-            "🗂️ Row Indices (Rows)", 
+            "🗂️ Row Indices (Vertical Groups)", 
             options=columns, 
             default=[columns[0]] if columns else [],
-            help="Select columns to stack vertically as row groups."
+            help="Select columns to stack vertically as row groups (e.g. branch_name, loan_officer_id, loan_type)"
         )
         
         column_groupings = st.multiselect(
-            "📂 Column Groupings (Columns)",
+            "📂 Column Groupings (Horizontal Columns)",
             options=[c for c in columns if c not in row_indices],
             default=[columns[1]] if len(columns) > 1 else [],
-            help="Select columns to expand horizontally. (Uses first selected column in Polars)."
+            help="Select columns to expand horizontally (e.g. loan_status, approval_stage). (Uses first selected column in Polars)."
         )
         
     with col_p2:
         val_column = st.selectbox(
-            "🔢 Metric Value (Values)",
+            "🔢 Metric Value (Target Field)",
             options=columns,
             index=min(2, len(columns) - 1) if columns else 0,
-            help="Select the column containing the data values to aggregate."
+            help="Select the numeric column to compute metrics (e.g. loan_amount_usd, interest_rate, credit_score)"
         )
         
         agg_op = st.selectbox(
             "📈 Aggregation Function",
             options=["Sum", "Mean", "Count", "Max", "Min"],
             index=0,
-            help="Select the operation to compute values."
+            help="Select the mathematical operation (e.g. Sum of loan amounts, Mean interest rates, Count of applicants)"
         )
 
     # Pivot Execution Button
-    if st.button("📊 Execute Pivot Aggregation", type="primary", use_container_width=True):
+    if st.button(
+        "📊 Execute Pivot Aggregation", 
+        type="primary", 
+        use_container_width=True,
+        help="Click to run the multi-threaded Polars pivot operation on your selected rows and columns."
+    ):
         if not row_indices:
             st.error("Please select at least one Row Index column.")
         elif not column_groupings:
@@ -106,7 +111,6 @@ def render_pivot_container(api_client: AntigravityAPIClient):
         df_pivot = pd.DataFrame(pivot_res["data"])
         
         # Ensure row indexes are set as the dataframe index for index-like display
-        # We can detect if index columns are in dataframe columns
         cols_present = [c for c in row_indices if c in df_pivot.columns]
         if cols_present:
             df_pivot_styled = df_pivot.set_index(cols_present)
@@ -116,7 +120,6 @@ def render_pivot_container(api_client: AntigravityAPIClient):
         st.dataframe(df_pivot_styled, use_container_width=True)
         
         # Add Excel Download for Pivot
-        # Let's save pivoted dataframe back using openpyxl in streamlit locally
         try:
             import io
             bio = io.BytesIO()
@@ -129,7 +132,8 @@ def render_pivot_container(api_client: AntigravityAPIClient):
                 data=excel_data,
                 file_name="pivot_table_output.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                use_container_width=True,
+                help="Download the resulting pivot report table as an Excel spreadsheet for local usage."
             )
         except Exception as e:
             st.warning(f"Excel generation not available: {e}")

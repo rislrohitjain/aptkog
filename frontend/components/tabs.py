@@ -17,17 +17,17 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
         unsafe_allow_html=True
     )
     
-    # File Uploader
+    # File Uploader supporting Excel and CSV
     uploaded_files = st.file_uploader(
-        "Choose Excel (.xlsx) files",
-        type=["xlsx"],
+        "Choose Excel (.xlsx) or CSV (.csv) files",
+        type=["xlsx", "csv"],
         accept_multiple_files=True,
-        key="file_uploader"
+        key="file_uploader",
+        help="Upload up to 10 files (max 500MB each) containing bank data, loan history, credit files, or lists."
     )
     
     # Process uploads when files are selected
     if uploaded_files:
-        # Check if we need to hit the upload API (only if new files are uploaded)
         current_names = [f.name for f in uploaded_files]
         last_uploaded_names = st.session_state.get("last_uploaded_names", [])
         
@@ -36,7 +36,7 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
             for f in uploaded_files:
                 file_payloads.append((f.name, f.getvalue()))
                 
-            with st.spinner("Uploading and analyzing Excel sheets locally..."):
+            with st.spinner("Uploading and analyzing spreadsheets locally..."):
                 response = api_client.upload_files(file_payloads)
                 
             if "error" in response:
@@ -49,7 +49,7 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
     files_metadata = st.session_state.get("files_metadata", [])
     
     if not files_metadata:
-        st.info("Please upload one or more Excel files to get started.")
+        st.info("💡 Please upload one or more bank loan spreadsheets to start analytics.")
         return
 
     st.markdown("#### 📂 Uploaded Datasets")
@@ -67,7 +67,7 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
             
             st.markdown(
                 f"""
-                <div style="font-size:13px; color:#6B7280; margin-bottom: 10px;">
+                <div style="font-size:13px; color:#94A3B8; margin-bottom: 10px;">
                     <strong>Path:</strong> {filepath} &nbsp;|&nbsp; <strong>Size:</strong> {file_size_mb} MB
                 </div>
                 """,
@@ -85,9 +85,13 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
                         )
                         
                         # Helper buttons to set active file/sheet for analytics
-                        col1, col2 = st.columns([1, 4])
+                        col1, col2 = st.columns([1.5, 4])
                         with col1:
-                            if st.button("Set as Active Dataset", key=f"set_active_{idx}_{s_idx}"):
+                            if st.button(
+                                "Set as Active Dataset", 
+                                key=f"set_active_{idx}_{s_idx}",
+                                help="Set this specific sheet/file as the active working set for filtering, pivots, and joins below."
+                            ):
                                 st.session_state["active_file_path"] = filepath
                                 st.session_state["active_file_name"] = meta["filename"]
                                 st.session_state["active_sheet_name"] = sheet_name

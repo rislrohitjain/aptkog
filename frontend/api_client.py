@@ -19,7 +19,11 @@ class AntigravityAPIClient:
         url = f"{self.base_url}/api/upload"
         files = []
         for name, data in file_tuples:
-            files.append(("files", (name, data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")))
+            if name.lower().endswith(".csv"):
+                mime = "text/csv"
+            else:
+                mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            files.append(("files", (name, data, mime)))
             
         try:
             response = requests.post(url, files=files, timeout=120)
@@ -95,6 +99,7 @@ class AntigravityAPIClient:
         join_key_a: str,
         join_key_b: str,
         join_type: str,
+        select_columns_a: List[str],
         select_columns_b: List[str]
     ) -> Any:
         """
@@ -109,6 +114,7 @@ class AntigravityAPIClient:
             "join_key_a": join_key_a,
             "join_key_b": join_key_b,
             "join_type": join_type.lower(),
+            "select_columns_a": select_columns_a,
             "select_columns_b": select_columns_b
         }
         try:

@@ -15,7 +15,7 @@ from frontend.components.diagnostics import render_diagnostics_panel
 
 # Set page configuration for visual elegance
 st.set_page_config(
-    page_title="Antigravity 2.0 - Local Data Analytics Engine",
+    page_title="AptKogMatrix - Data Analytics Engine",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -30,11 +30,13 @@ st.markdown(
         
         html, body, [class*="css"] {
             font-family: 'Outfit', sans-serif;
+            background-color: #0F172A !important;
+            color: #F8FAFC !important;
         }
         
         /* Premium custom heading stylings */
         .main-title {
-            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #C084FC 100%);
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #EC4899 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-size: 42px;
@@ -44,18 +46,18 @@ st.markdown(
         
         .subtitle {
             font-size: 16px;
-            color: #6B7280;
+            color: #94A3B8;
             margin-bottom: 25px;
         }
         
-        /* Modern expander styling */
+        /* Modern expander styling optimized for dark theme */
         .streamlit-expanderHeader {
             font-size: 18px !important;
             font-weight: 600 !important;
-            color: #1E293B !important;
-            background-color: #F8FAFC !important;
+            color: #F8FAFC !important;
+            background-color: #1E293B !important;
             border-radius: 6px !important;
-            border: 1px solid #E2E8F0 !important;
+            border: 1px solid #334155 !important;
             margin-bottom: 10px;
         }
         
@@ -63,7 +65,7 @@ st.markdown(
         [data-testid="stMetricValue"] {
             font-size: 28px !important;
             font-weight: 700 !important;
-            color: #4F46E5 !important;
+            color: #6366F1 !important;
         }
     </style>
     """,
@@ -81,8 +83,8 @@ def main():
     st.markdown(
         """
         <div>
-            <h1 class="main-title">Antigravity 2.0</h1>
-            <p class="subtitle">Advanced Local Data Analytics Engine - Powered by Polars, LangChain, & Scikit-Learn</p>
+            <h1 class="main-title">AptKogMatrix</h1>
+            <p class="subtitle">Secure Offline Data Analytics Engine</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -113,6 +115,18 @@ def main():
     # Infrastructure Diagnostics & Local Privacy Block
     with st.expander("⚙️ Infrastructure Diagnostic Panel", expanded=(active_block == "Diagnostics")):
         render_diagnostics_panel(api_client)
+
+    # Render Sticky Developer Attribution Footer
+    st.markdown(
+        """
+        <hr style="margin-top: 40px; border-color: #334155;" />
+        <div style="text-align: center; padding: 15px 0 30px 0; color: #94A3B8; font-size: 13px;">
+            <p style="margin: 0;"><strong>AptKogMatrix</strong> - Data Analytics Engine</p>
+            <p style="margin: 5px 0 0 0;">Developer Attribution: <a href="https://rohitjain-resume.vercel.app/" target="_blank" style="color: #6366F1; text-decoration: none; font-weight: 600;">Rohit Jain</a> | Senior Python Software Architect</p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 if __name__ == "__main__":
     main()

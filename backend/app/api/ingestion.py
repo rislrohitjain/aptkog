@@ -37,10 +37,11 @@ async def upload_files(files: Optional[List[UploadFile]] = File(default=None)):
         if not file.filename:
             continue
             
-        if not file.filename.lower().endswith(".xlsx"):
+        file_ext = os.path.splitext(file.filename.lower())[1]
+        if file_ext not in [".xlsx", ".csv"]:
             raise HTTPException(
                 status_code=400, 
-                detail=f"File '{file.filename}' is not an Excel (.xlsx) file."
+                detail=f"File '{file.filename}' is not an Excel (.xlsx) or CSV (.csv) file."
             )
             
         # Secure filename by stripping path characters

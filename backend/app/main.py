@@ -16,8 +16,8 @@ logger = logging.getLogger("antigravity_backend")
 
 # Initialize FastAPI application
 app = FastAPI(
-    title="Antigravity 2.0 Backend",
-    description="Advanced Local Data Analytics Engine - Decoupled REST API",
+    title="AptKogMatrix Backend",
+    description="Data Analytics Engine - Decoupled REST API",
     version="2.0.0"
 )
 
@@ -53,12 +53,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def root():
     return {
         "status": "online",
-        "engine": "Antigravity 2.0 Advanced Local Data Analytics Engine",
+        "engine": "AptKogMatrix Data Analytics Engine",
         "docs_url": "/docs"
     }
 
 if __name__ == "__main__":
-    logger.info(f"Starting Antigravity 2.0 Backend on {settings.HOST}:{settings.PORT}")
+    logger.info(f"Starting AptKogMatrix Backend on {settings.HOST}:{settings.PORT}")
     uvicorn.run(
         "backend.app.main:app",
         host=settings.HOST,

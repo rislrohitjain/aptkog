@@ -18,6 +18,7 @@ class JoinRequest(BaseModel):
     join_key_a: str
     join_key_b: str
     join_type: str  # 'left', 'inner', 'outer'
+    select_columns_a: List[str]
     select_columns_b: List[str]
 
 @router.post("/join")
@@ -43,6 +44,7 @@ async def join_datasets(payload: JoinRequest):
             join_key_a=payload.join_key_a,
             join_key_b=payload.join_key_b,
             join_type=payload.join_type,
+            select_columns_a=payload.select_columns_a,
             select_columns_b=payload.select_columns_b
         )
         

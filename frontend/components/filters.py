@@ -40,8 +40,8 @@ def render_filters_container(api_client: AntigravityAPIClient):
     st.markdown(
         """
         <div style="margin-bottom: 15px;">
-            <h3 style="margin:0; color:#5B21B6; font-size:20px;">🔍 Universal Filter & Tri-View Engine</h3>
-            <p style="margin: 2px 0 10px 0; color:#6B7280; font-size:14px;">Define query parameters, perform unsupervised clustering, and visualize datasets.</p>
+            <h3 style="margin:0; color:#6366F1; font-size:20px;">🔍 Universal Filter & Tri-View Engine</h3>
+            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Define query parameters to screen loan applications, perform unsupervised clustering, and visualize customer segments.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -59,7 +59,6 @@ def render_filters_container(api_client: AntigravityAPIClient):
     st.markdown(f"**Loaded Sheet:** `{sheet_name}` in `{filename}`")
 
     # Fetch schema details from session state if available, or fetch it via filter
-    # To do that, we can run an initial empty filter request to fetch metadata
     if "filter_response" not in st.session_state or st.session_state.get("last_filtered_sheet") != (filepath, sheet_name):
         with st.spinner("Analyzing columns..."):
             res = api_client.filter_dataset(filepath, sheet_name, [])
@@ -97,13 +96,15 @@ def render_filters_container(api_client: AntigravityAPIClient):
             col_sel = st.selectbox(
                 f"Column", columns, 
                 index=columns.index(filt["column"]) if filt["column"] in columns else 0,
-                key=f"col_{i}"
+                key=f"col_{i}",
+                help="Select the column to apply the filter rule on (e.g. loan_amount, credit_score)."
             )
         with col2:
             op_sel = st.selectbox(
                 f"Operator", operators, 
                 index=operators.index(filt["operator"]) if filt["operator"] in operators else 0,
-                key=f"op_{i}"
+                key=f"op_{i}",
+                help="Choose the comparison operator (e.g. '>' for greater than, '=' for exact match)."
             )
         with col3:
             # Disable value input for Null checks
@@ -113,11 +114,12 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 value=str(filt["value"]) if filt["value"] is not None else "",
                 disabled=disable_val,
                 key=f"val_{i}",
-                placeholder="Comma separate for In/Not In"
+                placeholder="Comma separate for In/Not In",
+                help="Enter the value to compare against. Use comma separation for 'In' or 'Not In'."
             )
         with col4:
             st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-            remove_clicked = st.button("❌", key=f"del_{i}")
+            remove_clicked = st.button("❌", key=f"del_{i}", help="Click to delete this filter rule.")
             
         if not remove_clicked:
             new_filters_list.append({
@@ -130,7 +132,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
 
     c_btn1, c_btn2, c_btn3 = st.columns([1.5, 1.5, 4])
     with c_btn1:
-        if st.button("➕ Add Condition", use_container_width=True):
+        if st.button("➕ Add Condition", use_container_width=True, help="Add a new filter condition block to refine the query."):
             st.session_state["filters_list"].append({
                 "column": columns[0] if columns else "",
                 "operator": "=",
@@ -138,12 +140,12 @@ def render_filters_container(api_client: AntigravityAPIClient):
             })
             st.rerun()
     with c_btn2:
-        if st.button("🧹 Clear Filters", use_container_width=True):
+        if st.button("🧹 Clear Filters", use_container_width=True, help="Remove all query conditions and reset the view."):
             st.session_state["filters_list"] = []
             st.rerun()
 
     # Advanced Machine Learning / Clustering controls
-    st.markdown("<hr style='margin:15px 0; border-color:#E5E7EB;' />", unsafe_allow_html=True)
+    st.markdown("<hr style='margin:15px 0; border-color:#334155;' />", unsafe_allow_html=True)
     st.markdown("##### 🧠 Unsupervised Clustering (Scikit-Learn)")
     
     numeric_cols = [c for c, dtype in schema.items() if "int" in dtype or "float" in dtype]
@@ -153,26 +155,33 @@ def render_filters_container(api_client: AntigravityAPIClient):
         selected_cluster_cols = st.multiselect(
             "Select Numeric Columns for K-Means Clustering",
             options=numeric_cols,
-            help="Applies standard scaling followed by K-Means. Appends 'Cluster_Label' to results."
+            help="Select numeric variables (e.g. loan_amount, credit_score, income) to segment accounts using K-Means clustering."
         )
     with col_c2:
         cluster_cnt = st.number_input(
-            "Cluster Count (K)", min_value=2, max_value=10, value=3
+            "Cluster Count (K)", min_value=2, max_value=10, value=3,
+            help="Number of target segment clusters to divide the dataset into."
         )
 
     # Anchor columns to select for Tree hierarchy
-    st.markdown("<hr style='margin:15px 0; border-color:#E5E7EB;' />", unsafe_allow_html=True)
+    st.markdown("<hr style='margin:15px 0; border-color:#334155;' />", unsafe_allow_html=True)
     st.markdown("##### 🌳 Hierarchical Tree Settings")
     string_cols = [c for c, dtype in schema.items() if "str" in dtype or "utf8" in dtype]
     
     selected_tree_cols = st.multiselect(
         "Select Categorical Columns to group Hierarchically",
         options=string_cols,
-        default=string_cols[:2] if len(string_cols) >= 2 else string_cols
+        default=string_cols[:2] if len(string_cols) >= 2 else string_cols,
+        help="Select categorical variables (e.g. loan_type, loan_status, region) to create a nested breakdown tree."
     )
 
     # Filter Execution Button
-    if st.button("🚀 Apply Filters & Process Views", type="primary", use_container_width=True):
+    if st.button(
+        "🚀 Apply Filters & Process Views", 
+        type="primary", 
+        use_container_width=True,
+        help="Click to execute the query conditions, K-Means clustering, and hierarchical calculations."
+    ):
         with st.spinner("Applying universal filter and updating views..."):
             res = api_client.filter_dataset(
                 filepath=filepath,
@@ -199,12 +208,12 @@ def render_filters_container(api_client: AntigravityAPIClient):
     st.markdown("##### 📊 Record Metrics Summary")
     col_m1, col_m2, col_m3 = st.columns(3)
     with col_m1:
-        st.metric("Total Records Loaded", f"{total:,}")
+        st.metric("Total Records Loaded", f"{total:,}", help="Total number of database records loaded in memory.")
     with col_m2:
-        st.metric("Filtered Records Matching", f"{filtered:,}")
+        st.metric("Filtered Records Matching", f"{filtered:,}", help="Number of records matching the current query criteria.")
     with col_m3:
         percentage = (filtered / total * 100) if total > 0 else 0
-        st.metric("Data Selection ratio", f"{percentage:.1f}%")
+        st.metric("Data Selection ratio", f"{percentage:.1f}%", help="Percentage of base records matching the filter.")
         
     st.progress(percentage / 100 if total > 0 else 0)
 
@@ -231,15 +240,26 @@ def render_filters_container(api_client: AntigravityAPIClient):
             
             col_g1, col_g2, col_g3, col_g4 = st.columns(4)
             with col_g1:
-                x_axis = st.selectbox("X-Axis Column", g_cols, index=0 if g_cols else None)
+                x_axis = st.selectbox(
+                    "X-Axis Column", g_cols, index=0 if g_cols else None,
+                    help="Select variable for the horizontal X-axis."
+                )
             with col_g2:
-                y_axis = st.selectbox("Y-Axis Column (Numeric)", [c for c in g_cols if c in numeric_cols], index=0 if [c for c in g_cols if c in numeric_cols] else None)
+                y_axis = st.selectbox(
+                    "Y-Axis Column (Numeric)", [c for c in g_cols if c in numeric_cols], index=0 if [c for c in g_cols if c in numeric_cols] else None,
+                    help="Select numeric variable for the vertical Y-axis."
+                )
             with col_g3:
-                # Add Cluster Label if exists in dataset
                 color_options = ["None"] + [c for c in g_cols if c in string_cols or "Cluster" in c]
-                color_by = st.selectbox("Group/Color By", color_options)
+                color_by = st.selectbox(
+                    "Group/Color By", color_options,
+                    help="Group and color coordinate points based on categorical values (e.g. loan status or cluster label)."
+                )
             with col_g4:
-                chart_type = st.selectbox("Chart Type", ["Scatter", "Bar", "Line", "Histogram"])
+                chart_type = st.selectbox(
+                    "Chart Type", ["Scatter", "Bar", "Line", "Histogram"],
+                    help="Select visual representation type."
+                )
                 
             color_param = None if color_by == "None" else color_by
             
@@ -254,7 +274,12 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 fig = px.histogram(df_graph, x=x_axis, color=color_param, title=f"Distribution of {x_axis}")
                 
             if fig:
-                fig.update_layout(template="plotly_white")
+                # Dark template integration for Plotly Graph
+                fig.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="#1E293B",
+                    plot_bgcolor="#1E293B"
+                )
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No data available for plotting.")
@@ -263,7 +288,6 @@ def render_filters_container(api_client: AntigravityAPIClient):
         tree_node = filter_res.get("tree_data", {})
         if tree_node and tree_node.get("children"):
             st.markdown("##### Plotly Interactive Treemap")
-            # Convert Tree JSON to Flat arrays for Plotly
             ids, labels, parents, values = flatten_tree(tree_node)
             
             fig_tree = go.Figure(go.Treemap(
@@ -275,30 +299,41 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 textinfo="label+value+percent parent",
                 hovertemplate='<b>%{label} </b><br>Records: %{value}<br>Percent of Parent: %{percentParent:.2%}',
             ))
-            fig_tree.update_layout(margin=dict(t=10, l=10, r=10, b=10))
+            fig_tree.update_layout(
+                margin=dict(t=10, l=10, r=10, b=10),
+                template="plotly_dark",
+                paper_bgcolor="#1E293B",
+                plot_bgcolor="#1E293B"
+            )
             st.plotly_chart(fig_tree, use_container_width=True)
             
-            # Formatted text hierarchy representation for alternative view
             with st.expander("📄 View JSON Schema hierarchy"):
                 st.json(tree_node)
         else:
             st.info("Configure 'Hierarchical Tree Settings' above and click Apply to generate a tree hierarchy.")
 
     # LangChain Chat Dialogue Assistant
-    st.markdown("<hr style='margin:20px 0; border-color:#E5E7EB;' />", unsafe_allow_html=True)
+    st.markdown("<hr style='margin:20px 0; border-color:#334155;' />", unsafe_allow_html=True)
     st.markdown("##### 💬 Semantic AI Data Assistant (LangChain)")
     
-    # Store chat history in session state
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
         
     for q, ans in st.session_state["chat_history"]:
         st.markdown(f"**👤 You:** {q}")
         st.markdown(f"**🤖 Analyst:** {ans}")
-        st.markdown("<hr style='margin:10px 0; border-style:dashed; border-color:#E5E7EB;' />", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:10px 0; border-style:dashed; border-color:#334155;' />", unsafe_allow_html=True)
         
-    chat_question = st.text_input("Ask a question about this sheet (e.g., 'Describe the columns', 'Which columns have null values?')", key="chat_question_input")
-    if st.button("Send Query", key="send_chat_query"):
+    chat_question = st.text_input(
+        "Ask a question about this sheet (e.g., 'Describe the columns', 'Which columns have null values?')", 
+        key="chat_question_input",
+        help="Type a question about the active bank loan dataset. Processing is offline and secure."
+    )
+    if st.button(
+        "Send Query", 
+        key="send_chat_query",
+        help="Click to submit the query to the offline LangChain AI data analyst."
+    ):
         if chat_question.strip():
             with st.spinner("LangChain analyzing dataset schema and metadata..."):
                 chat_res = api_client.ask_analyst(filepath, sheet_name, chat_question)

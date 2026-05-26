@@ -16,20 +16,29 @@ def clear_cache():
 
 def load_excel_sheet(filepath: str, sheet_name: str) -> pl.DataFrame:
     """
-    Loads a sheet from an Excel file using Polars with Calamine engine for speed.
+    Loads a sheet from an Excel file or parses a CSV file using Polars.
     """
     cache_key = (filepath, sheet_name)
     if cache_key in _DATAFRAME_CACHE:
         logger.info(f"Loading from cache: {cache_key}")
         return _DATAFRAME_CACHE[cache_key]
 
-    logger.info(f"Loading Excel file: {filepath}, sheet: {sheet_name}")
-    try:
-        # calamine engine is much faster and uses less memory for large Excel files
-        df = pl.read_excel(filepath, sheet_name=sheet_name, engine="calamine")
-    except Exception as e:
-        logger.warning(f"Calamine engine failed, falling back to openpyxl: {e}")
-        df = pl.read_excel(filepath, sheet_name=sheet_name, engine="openpyxl")
+    logger.info(f"Loading file: {filepath}, sheet/csv: {sheet_name}")
+    filename = os.path.basename(filepath)
+    
+    if filename.lower().endswith(".csv"):
+        try:
+            df = pl.read_csv(filepath)
+        except Exception as e:
+            logger.error(f"Failed to load CSV file: {e}")
+            raise e
+    else:
+        try:
+            # calamine engine is much faster and uses less memory for large Excel files
+            df = pl.read_excel(filepath, sheet_name=sheet_name, engine="calamine")
+        except Exception as e:
+            logger.warning(f"Calamine engine failed, falling back to openpyxl: {e}")
+            df = pl.read_excel(filepath, sheet_name=sheet_name, engine="openpyxl")
     
     # Cache the dataframe
     # Limit cache size to prevent memory leaks with large datasets
@@ -43,21 +52,25 @@ def load_excel_sheet(filepath: str, sheet_name: str) -> pl.DataFrame:
 
 def get_excel_metadata(filepath: str) -> dict:
     """
-    Extracts sheet names and basic info without loading the whole file.
+    Extracts sheet names and basic info. Supports Excel and CSV files.
     """
-    try:
-        from python_calamine import CalamineWorkbook
-        workbook = CalamineWorkbook.from_path(filepath)
-        sheet_names = workbook.sheet_names
-    except Exception as e:
-        logger.warning(f"Calamine workbook loading failed, falling back to openpyxl: {e}")
-        import openpyxl
-        wb = openpyxl.load_workbook(filepath, read_only=True)
-        sheet_names = wb.sheetnames
-        wb.close()
+    filename = os.path.basename(filepath)
+    if filename.lower().endswith(".csv"):
+        sheet_names = ["Default"]
+    else:
+        try:
+            from python_calamine import CalamineWorkbook
+            workbook = CalamineWorkbook.from_path(filepath)
+            sheet_names = workbook.sheet_names
+        except Exception as e:
+            logger.warning(f"Calamine workbook loading failed, falling back to openpyxl: {e}")
+            import openpyxl
+            wb = openpyxl.load_workbook(filepath, read_only=True)
+            sheet_names = wb.sheetnames
+            wb.close()
     
     metadata = {
-        "filename": os.path.basename(filepath),
+        "filename": filename,
         "filepath": filepath,
         "sheet_names": sheet_names,
         "file_size_mb": round(os.path.getsize(filepath) / (1024 * 1024), 2)
@@ -82,13 +95,32 @@ def apply_filter_engine(df: pl.DataFrame, filters: List[Dict[str, Any]]) -> pl.D
             continue
             
         col_expr = pl.col(col_name)
+        col_dtype = df.schema.get(col_name)
+        
+        # Cast value based on column datatype to avoid Polars strict type matching errors
+        typed_val = val
+        if val is not None and col_dtype is not None:
+            if col_dtype.is_numeric():
+                try:
+                    if col_dtype.is_integer():
+                        # Parse float first in case string is like "1.0"
+                        typed_val = int(float(val))
+                    else:
+                        typed_val = float(val)
+                except (ValueError, TypeError):
+                    pass
+            elif col_dtype == pl.Boolean:
+                val_str = str(val).lower()
+                if val_str in ["true", "1", "t", "y", "yes"]:
+                    typed_val = True
+                elif val_str in ["false", "0", "f", "n", "no"]:
+                    typed_val = False
         
         # Mapping 15+ comparison operators to Polars expressions
         if op == "=":
-            # Case of numeric vs string
-            exprs.append(col_expr == val)
+            exprs.append(col_expr == typed_val)
         elif op == "!=":
-            exprs.append(col_expr != val)
+            exprs.append(col_expr != typed_val)
         elif op == "Like":
             # SQL-like Case-insensitive matching, e.g. %abc%
             val_str = str(val) if val is not None else ""
@@ -113,34 +145,43 @@ def apply_filter_engine(df: pl.DataFrame, filters: List[Dict[str, Any]]) -> pl.D
             regex_val = re.escape(val_str).replace(r"\*", ".*").replace(r"\?", ".")
             exprs.append(col_expr.cast(pl.Utf8).str.contains(f"^{regex_val}$", literal=False))
         elif op == ">":
-            exprs.append(col_expr > float(val) if val is not None else pl.lit(True))
+            exprs.append(col_expr > typed_val if typed_val is not None else pl.lit(True))
         elif op == "<":
-            exprs.append(col_expr < float(val) if val is not None else pl.lit(True))
+            exprs.append(col_expr < typed_val if typed_val is not None else pl.lit(True))
         elif op == ">=":
-            exprs.append(col_expr >= float(val) if val is not None else pl.lit(True))
+            exprs.append(col_expr >= typed_val if typed_val is not None else pl.lit(True))
         elif op == "<=":
-            exprs.append(col_expr <= float(val) if val is not None else pl.lit(True))
+            exprs.append(col_expr <= typed_val if typed_val is not None else pl.lit(True))
         elif op == "Is Null":
             exprs.append(col_expr.is_null())
         elif op == "Is Not Null":
             exprs.append(col_expr.is_not_null())
-        elif op == "In":
+        elif op in ["In", "Not In"]:
             if isinstance(val, str):
                 val_list = [x.strip() for x in val.split(",") if x.strip()]
             elif isinstance(val, list):
                 val_list = val
             else:
                 val_list = [val]
-            # Match elements string-wise or type-wise
-            exprs.append(col_expr.is_in(val_list))
-        elif op == "Not In":
-            if isinstance(val, str):
-                val_list = [x.strip() for x in val.split(",") if x.strip()]
-            elif isinstance(val, list):
-                val_list = val
+                
+            # Cast list items to match column type
+            typed_val_list = []
+            for item in val_list:
+                if col_dtype is not None and col_dtype.is_numeric():
+                    try:
+                        if col_dtype.is_integer():
+                            typed_val_list.append(int(float(item)))
+                        else:
+                            typed_val_list.append(float(item))
+                    except (ValueError, TypeError):
+                        typed_val_list.append(item)
+                else:
+                    typed_val_list.append(item)
+                    
+            if op == "In":
+                exprs.append(col_expr.is_in(typed_val_list))
             else:
-                val_list = [val]
-            exprs.append(~col_expr.is_in(val_list))
+                exprs.append(~col_expr.is_in(typed_val_list))
             
     # Combine all expressions with AND
     if exprs:
@@ -236,7 +277,8 @@ def execute_join_vlookup(
     join_key_a: str, 
     join_key_b: str, 
     join_type: str, 
-    select_columns_b: List[str]
+    select_columns_b: List[str],
+    select_columns_a: List[str]
 ) -> pl.DataFrame:
     """
     Executes a vectorized relational join resembling VLOOKUP/INDEX-MATCH.
@@ -246,6 +288,11 @@ def execute_join_vlookup(
     if join_key_b not in df_b.columns:
         raise ValueError(f"Join key '{join_key_b}' not found in File B columns.")
         
+    # Ensure key column is included and valid columns are selected from A
+    valid_cols_a = list(set([join_key_a] + select_columns_a))
+    cols_to_keep_a = [c for c in df_a.columns if c in valid_cols_a]
+    df_a_subset = df_a.select(cols_to_keep_a)
+
     # Ensure key column is included and valid columns are selected from B
     valid_cols_b = [join_key_b] + [c for c in select_columns_b if c in df_b.columns and c != join_key_b]
     df_b_subset = df_b.select(valid_cols_b)
@@ -259,7 +306,7 @@ def execute_join_vlookup(
     }
     how = how_map.get(join_type.lower(), "left")
     
-    joined_df = df_a.join(
+    joined_df = df_a_subset.join(
         df_b_subset,
         left_on=join_key_a,
         right_on=join_key_b,
