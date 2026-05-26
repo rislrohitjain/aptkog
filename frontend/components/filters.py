@@ -238,7 +238,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
             st.markdown("##### Plotly Graph Configurator")
             g_cols = list(df_graph.columns)
             
-            col_g1, col_g2, col_g3, col_g4 = st.columns(4)
+            col_g1, col_g2, col_g3, col_g4, col_g5 = st.columns(5)
             with col_g1:
                 x_axis = st.selectbox(
                     "X-Axis Column", g_cols, index=0 if g_cols else None,
@@ -263,18 +263,47 @@ def render_filters_container(api_client: AntigravityAPIClient):
                     "Chart Type", ["Scatter", "Bar", "Line", "Histogram"],
                     help="Select visual representation type."
                 )
+            with col_g5:
+                agg_type = st.selectbox(
+                    "Aggregation / Group By", ["None (Raw Records)", "Count of Records", "Sum", "Mean", "Min", "Max"],
+                    help="Aggregate values or counts by X-axis and Group/Color categories."
+                )
                 
             color_param = None if color_by == "None" else color_by
+            df_plot = df_graph.copy()
+            y_axis_col = y_axis
+            
+            # Apply aggregation if specified
+            if agg_type != "None (Raw Records)" and x_axis:
+                group_keys = [x_axis]
+                if color_param:
+                    group_keys.append(color_param)
+                
+                if agg_type == "Count of Records":
+                    df_plot = df_plot.groupby(group_keys).size().reset_index(name="Record Count")
+                    y_axis_col = "Record Count"
+                elif y_axis:
+                    agg_map = {
+                        "Sum": "sum",
+                        "Mean": "mean",
+                        "Min": "min",
+                        "Max": "max"
+                    }
+                    try:
+                        df_plot[y_axis] = pd.to_numeric(df_plot[y_axis], errors='coerce')
+                    except Exception:
+                        pass
+                    df_plot = df_plot.groupby(group_keys)[y_axis].agg(agg_map[agg_type]).reset_index()
             
             fig = None
-            if chart_type == "Scatter" and x_axis and y_axis:
-                fig = px.scatter(df_graph, x=x_axis, y=y_axis, color=color_param, title=f"Scatter Plot: {y_axis} vs {x_axis}")
-            elif chart_type == "Bar" and x_axis and y_axis:
-                fig = px.bar(df_graph, x=x_axis, y=y_axis, color=color_param, title=f"Bar Chart: {y_axis} vs {x_axis}")
-            elif chart_type == "Line" and x_axis and y_axis:
-                fig = px.line(df_graph, x=x_axis, y=y_axis, color=color_param, title=f"Line Chart: {y_axis} vs {x_axis}")
+            if chart_type == "Scatter" and x_axis and y_axis_col:
+                fig = px.scatter(df_plot, x=x_axis, y=y_axis_col, color=color_param, title=f"Scatter Plot: {y_axis_col} vs {x_axis}")
+            elif chart_type == "Bar" and x_axis and y_axis_col:
+                fig = px.bar(df_plot, x=x_axis, y=y_axis_col, color=color_param, title=f"Bar Chart: {y_axis_col} vs {x_axis}", barmode="group")
+            elif chart_type == "Line" and x_axis and y_axis_col:
+                fig = px.line(df_plot, x=x_axis, y=y_axis_col, color=color_param, title=f"Line Chart: {y_axis_col} vs {x_axis}")
             elif chart_type == "Histogram" and x_axis:
-                fig = px.histogram(df_graph, x=x_axis, color=color_param, title=f"Distribution of {x_axis}")
+                fig = px.histogram(df_plot, x=x_axis, y=y_axis_col if agg_type != "None (Raw Records)" else None, color=color_param, title=f"Distribution of {x_axis}")
                 
             if fig:
                 # Dark template integration for Plotly Graph
