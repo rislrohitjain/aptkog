@@ -1,5 +1,7 @@
 import sys
 import os
+import subprocess
+import time
 # Dynamically add the parent directory to sys.path to ensure 'frontend' package is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -91,9 +93,50 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+def start_backend_if_needed(api_client):
+    """
+    Checks if the backend API is online. If offline, launches it in the background.
+    Optimized for seamless local execution and Hugging Face Spaces deployments.
+    """
+    try:
+        # Check if backend is already online
+        res = requests.get(f"{api_client.base_url}/", timeout=1.0)
+        if res.status_code == 200:
+            return
+    except Exception:
+        pass
+
+    # Backend is offline, spawn it in the background
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
+    # Determine python executable path (check venv first, then system python)
+    venv_python = os.path.join(root_dir, "venv", "Scripts", "python.exe")
+    if not os.path.exists(venv_python):
+        venv_python = os.path.join(root_dir, "venv", "bin", "python")
+    if not os.path.exists(venv_python):
+        venv_python = sys.executable  # Fallback to current python interpreter
+        
+    host = os.environ.get("HOST", "127.0.0.1")
+    port = os.environ.get("PORT", "8000")
+    
+    # In Hugging Face Spaces, always bind internally to 127.0.0.1 on port 8000
+    if "SPACE_ID" in os.environ:
+        host = "127.0.0.1"
+        port = "8000"
+        
+    cmd = [venv_python, "-m", "uvicorn", "backend.app.main:app", "--host", host, "--port", port]
+    try:
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(2.5)  # Wait for uvicorn to bind to port
+    except Exception as e:
+        st.warning(f"Could not automatically start backend server: {e}")
+
 def main():
     # Instantiate backend API client
     api_client = AntigravityAPIClient()
+    
+    # Auto-start backend if needed (e.g. on Hugging Face Spaces)
+    start_backend_if_needed(api_client)
     
     # Render global sidebar navigation
     render_sidebar()
@@ -138,7 +181,7 @@ def main():
         
     # Infrastructure Diagnostics & Local Privacy Block
     import os
-    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"]
+    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"] or "SPACE_ID" in os.environ
     if not hide_tech:
         with st.expander("⚙️ Infrastructure Diagnostic Panel", expanded=(active_block == "Diagnostics")):
             render_diagnostics_panel(api_client)

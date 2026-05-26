@@ -91,7 +91,7 @@ def render_sidebar():
         st.session_state["active_block"] = "Ingestion"
         
     import os
-    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"]
+    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"] or "SPACE_ID" in os.environ
 
     # Navigation buttons
     nav_options = {
