@@ -37,6 +37,7 @@ share/python-wheels/
 
 # Project-specific paths
 temp_uploads/
+**/temp_uploads/
 
 # Streamlit configurations
 .streamlit/
