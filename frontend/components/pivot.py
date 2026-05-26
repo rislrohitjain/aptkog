@@ -12,7 +12,7 @@ def render_pivot_container(api_client: AntigravityAPIClient):
         """
         <div style="margin-bottom: 15px;">
             <h3 style="margin:0; color:#6366F1; font-size:20px;">📊 Dynamic Pivot Engine</h3>
-            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Simulate drag-and-drop multidimensional loan analysis by grouping branch metrics and calculating averages or totals.</p>
+            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Simulate drag-and-drop multidimensional data analysis by grouping branch metrics and calculating averages or totals.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -46,14 +46,14 @@ def render_pivot_container(api_client: AntigravityAPIClient):
             "🗂️ Row Indices (Vertical Groups)", 
             options=columns, 
             default=[columns[0]] if columns else [],
-            help="Select columns to stack vertically as row groups (e.g. branch_name, loan_officer_id, loan_type)"
+            help="Select columns to stack vertically as row groups (e.g. branch_name, officer_id, type)"
         )
         
         column_groupings = st.multiselect(
             "📂 Column Groupings (Horizontal Columns)",
             options=[c for c in columns if c not in row_indices],
             default=[columns[1]] if len(columns) > 1 else [],
-            help="Select columns to expand horizontally (e.g. loan_status, approval_stage). (Uses first selected column in Polars)."
+            help="Select columns to expand horizontally (e.g. status, approval_stage). (Uses first selected column in Polars)."
         )
         
     with col_p2:
@@ -61,14 +61,14 @@ def render_pivot_container(api_client: AntigravityAPIClient):
             "🔢 Metric Value (Target Field)",
             options=columns,
             index=min(2, len(columns) - 1) if columns else 0,
-            help="Select the numeric column to compute metrics (e.g. loan_amount_usd, interest_rate, credit_score)"
+            help="Select the numeric column to compute metrics (e.g. amount_usd, interest_rate, credit_score)"
         )
         
         agg_op = st.selectbox(
             "📈 Aggregation Function",
             options=["Sum", "Mean", "Count", "Max", "Min"],
             index=0,
-            help="Select the mathematical operation (e.g. Sum of loan amounts, Mean interest rates, Count of applicants)"
+            help="Select the mathematical operation (e.g. Sum of amounts, Mean interest rates, Count of applicants)"
         )
 
     # Pivot Execution Button

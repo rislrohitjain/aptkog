@@ -6,13 +6,13 @@ def render_join_container(api_client: AntigravityAPIClient):
     """
     Renders the Dataset Builder (Join / VLOOKUP Simulator) Container.
     Allows users to merge files via key matching and download the output.
-    Optimized for bank loan internal department employees.
+    Optimized for internal department employees.
     """
     st.markdown(
         """
         <div style="margin-bottom: 15px;">
             <h3 style="margin:0; color:#6366F1; font-size:20px;">🔗 Vectorized Dataset Builder (VLOOKUP & Join Simulator)</h3>
-            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Simulate complex bank database lookups (VLOOKUP, INDEX-MATCH) by joining columns from two sheets on a common key.</p>
+            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Simulate complex database lookups (VLOOKUP, INDEX-MATCH) by joining columns from two sheets on a common key.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -20,7 +20,7 @@ def render_join_container(api_client: AntigravityAPIClient):
 
     files_metadata = st.session_state.get("files_metadata", [])
     if len(files_metadata) < 2:
-        st.warning("⚠️ Relational joins require at least two uploaded files (e.g. Applicant Profiles and Credit Scores). Please upload more files in the Ingestion Panel.")
+        st.warning("⚠️ Relational joins require at least two uploaded files (e.g. Profiles and Credit Scores). Please upload more files in the Ingestion Panel.")
         return
 
     # Create file mapping
@@ -100,7 +100,7 @@ def render_join_container(api_client: AntigravityAPIClient):
         join_key_a = st.selectbox(
             "Join Key Column in File A", 
             options=cols_a,
-            help="Select the primary column in File A to match rows (e.g. customer_id, loan_number)"
+            help="Select the primary column in File A to match rows (e.g. customer_id, record_id)"
         )
     with col_p2:
         b_default_key_idx = cols_b.index(join_key_a) if join_key_a in cols_b else 0
@@ -114,7 +114,7 @@ def render_join_container(api_client: AntigravityAPIClient):
         join_type = st.selectbox(
             "Join Method", 
             options=["Left", "Inner", "Outer"], 
-            help="Left Join is standard VLOOKUP (keeps all applicants from Table A and appends data from Table B where matches exist)."
+            help="Left Join is standard VLOOKUP (keeps all records from Table A and appends data from Table B where matches exist)."
         )
 
     # Column Selection block for File A & File B

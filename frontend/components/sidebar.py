@@ -10,20 +10,20 @@ def show_flow_dialog():
         st.markdown(
             """
             ### 🔄 AptKogMatrix Application Flow
-            1. **📥 Data Ingestion**: Upload Excel or CSV files (e.g., active loan ledgers, customer profiles) in the ingestion tab and set the active sheet.
+            1. **📥 Data Ingestion**: Upload Excel or CSV files (e.g., active ledgers, customer profiles) in the ingestion tab and set the active sheet.
             2. **🔍 Universal Filter**: Apply robust query operations (Credit Score > 720, Debt-to-Income < 40%) to quickly isolate records.
-            3. **📊 Pivot Engine**: Construct multi-dimensional pivot grids (e.g., group default counts by loan officer).
-            4. **🔗 Dataset Joiner**: Combine tables (e.g., merge Loan Ledger with Credit Scores on `Customer_ID`) and download a unified spreadsheet.
+            3. **📊 Pivot Engine**: Construct multi-dimensional pivot grids (e.g., group default counts by officer).
+            4. **🔗 Dataset Joiner**: Combine tables (e.g., merge Ledger with Credit Scores on `Customer_ID`) and download a unified spreadsheet.
             """
         )
     else:
         st.markdown(
             """
             ### 🔄 AptKogMatrix एप्लिकेशन कार्यप्रवाह
-            1. **📥 डेटा इनजेशन (अपलोड)**: इनजेशन टैब में अपनी एक्सेल या सीएसवी फ़ाइलें (जैसे सक्रिय ऋण बहीखाता, ग्राहक प्रोफाइल) अपलोड करें और कार्य करने के लिए सक्रिय शीट चुनें।
+            1. **📥 डेटा इनजेशन (अपलोड)**: इनजेशन टैब में अपनी एक्सेल या सीएसवी फ़ाइलें (जैसे सक्रिय बहीखाता, ग्राहक प्रोफाइल) अपलोड करें और कार्य करने के लिए सक्रिय शीट चुनें।
             2. **🔍 यूनिवर्सल फ़िल्टर**: रिकॉर्ड्स को जल्दी से फ़िल्टर करने के लिए मजबूत शर्तें लागू करें (जैसे क्रेडिट स्कोर > 720, ऋण-से-आय < 40%)।
-            3. **📊 पिवट इंजन**: पिवट ग्रिड बनाएं (जैसे ऋण अधिकारी द्वारा डिफॉल्ट खातों को समूहित करना)।
-            4. **🔗 डेटासेट जॉइनर**: तालिकाओं को आपस में जोड़ें (जैसे `ग्राहक_आईडी` पर क्रेडिट स्कोर के साथ ऋण बहीखाता का मिलान करना) और एकीकृत एक्सेल शीट डाउनलोड करें।
+            3. **📊 पिवट इंजन**: पिवट ग्रिड बनाएं (जैसे अधिकारी द्वारा डिफॉल्ट खातों को समूहित करना)।
+            4. **🔗 डेटासेट जॉइनर**: तालिकाओं को आपस में जोड़ें (जैसे `ग्राहक_आईडी` पर क्रेडिट स्कोर के साथ बहीखाता का मिलान करना) और एकीकृत एक्सेल शीट डाउनलोड करें।
             """
         )
 
@@ -38,8 +38,8 @@ def show_security_dialog():
             """
             ### 🛡️ 100% Offline Processing - Secure & Local
             - **Local Execution**: All calculations, filtering, and joins are executed purely in memory on this machine.
-            - **No External Cloud Calls**: Your banking files, customer details, and proprietary loan matrices are never sent to external servers.
-            - **Offline-First Privacy**: Works fully disconnected from the internet to guarantee compliance with bank internal confidentiality standards.
+            - **No External Cloud Calls**: Your files, customer details, and proprietary data matrices are never sent to external servers.
+            - **Offline-First Privacy**: Works fully disconnected from the internet to guarantee compliance with internal confidentiality standards.
             """
         )
     else:
@@ -47,8 +47,8 @@ def show_security_dialog():
             """
             ### 🛡️ 100% ऑफ़लाइन प्रोसेसिंग - सुरक्षित और स्थानीय
             - **स्थानीय निष्पादन**: सभी गणनाएँ, फ़िल्टर और जॉइन विशुद्ध रूप से आपकी स्थानीय मशीन की मेमोरी में निष्पादित होते हैं।
-            - **कोई बाहरी क्लाउड कॉल नहीं**: आपकी लोन फाइलें, ग्राहक विवरण और स्वामित्व वाली ऋण मैट्रिक्स कभी भी बाहरी सर्वर पर नहीं भेजी जाती हैं।
-            - **ऑफ़लाइन-प्रथम गोपनीयता**: बैंक के आंतरिक गोपनीयता मानकों के अनुपालन की गारंटी के लिए इंटरनेट से पूरी तरह से डिस्कनेक्ट होकर काम करता है।
+            - **कोई बाहरी क्लाउड कॉल नहीं**: आपकी फाइलें, ग्राहक विवरण और स्वामित्व वाली डेटा मैट्रिक्स कभी भी बाहरी सर्वर पर नहीं भेजी जाती हैं।
+            - **ऑफ़लाइन-प्रथम गोपनीयता**: आंतरिक गोपनीयता मानकों के अनुपालन की गारंटी के लिए इंटरनेट से पूरी तरह से डिस्कनेक्ट होकर काम करता है।
             """
         )
 
@@ -75,9 +75,9 @@ def render_sidebar():
         
     # Navigation buttons
     nav_options = {
-        "📥 Data Ingestion": ("Ingestion", "Upload Excel or CSV bank files and choose the active workspace sheet."),
-        "🔍 Universal Filter & Tri-View": ("Filter", "Query bank ledgers, run K-Means credit clustering, and view tree structures."),
-        "📊 Dynamic Pivot Engine": ("Pivot", "Group and aggregate loan amounts by branch, status, or officer."),
+        "📥 Data Ingestion": ("Ingestion", "Upload Excel or CSV files and choose the active workspace sheet."),
+        "🔍 Universal Filter & Tri-View": ("Filter", "Query ledgers, run K-Means credit clustering, and view tree structures."),
+        "📊 Dynamic Pivot Engine": ("Pivot", "Group and aggregate amounts by branch, status, or officer."),
         "🔗 Dataset Builder (Join)": ("Join", "Perform relation joins between client lists and credit reports using a key column."),
         "⚙️ Diagnostics & Privacy": ("Diagnostics", "Check local memory usage, Polars thread diagnostics, and server health.")
     }
@@ -109,7 +109,7 @@ def render_sidebar():
         "🛡️ How it's secure", 
         key="btn_security", 
         use_container_width=True,
-        help="Click to see how your loan data is kept 100% secure and offline"
+        help="Click to see how your data is kept 100% secure and offline"
     ):
         show_security_dialog()
 

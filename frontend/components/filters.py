@@ -41,7 +41,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
         """
         <div style="margin-bottom: 15px;">
             <h3 style="margin:0; color:#6366F1; font-size:20px;">🔍 Universal Filter & Tri-View Engine</h3>
-            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Define query parameters to screen loan applications, perform unsupervised clustering, and visualize customer segments.</p>
+            <p style="margin: 2px 0 10px 0; color:#94A3B8; font-size:14px;">Define query parameters to screen data records, perform unsupervised clustering, and visualize customer segments.</p>
         </div>
         """,
         unsafe_allow_html=True
@@ -97,7 +97,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 f"Column", columns, 
                 index=columns.index(filt["column"]) if filt["column"] in columns else 0,
                 key=f"col_{i}",
-                help="Select the column to apply the filter rule on (e.g. loan_amount, credit_score)."
+                help="Select the column to apply the filter rule on (e.g. amount, credit_score)."
             )
         with col2:
             op_sel = st.selectbox(
@@ -155,7 +155,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
         selected_cluster_cols = st.multiselect(
             "Select Numeric Columns for K-Means Clustering",
             options=numeric_cols,
-            help="Select numeric variables (e.g. loan_amount, credit_score, income) to segment accounts using K-Means clustering."
+            help="Select numeric variables (e.g. amount, credit_score, income) to segment accounts using K-Means clustering."
         )
     with col_c2:
         cluster_cnt = st.number_input(
@@ -172,7 +172,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
         "Select Categorical Columns to group Hierarchically",
         options=string_cols,
         default=string_cols[:2] if len(string_cols) >= 2 else string_cols,
-        help="Select categorical variables (e.g. loan_type, loan_status, region) to create a nested breakdown tree."
+        help="Select categorical variables (e.g. type, status, region) to create a nested breakdown tree."
     )
 
     # Filter Execution Button
@@ -253,7 +253,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 color_options = ["None"] + [c for c in g_cols if c in string_cols or "Cluster" in c]
                 color_by = st.selectbox(
                     "Group/Color By", color_options,
-                    help="Group and color coordinate points based on categorical values (e.g. loan status or cluster label)."
+                    help="Group and color coordinate points based on categorical values (e.g. status or cluster label)."
                 )
             with col_g4:
                 chart_type = st.selectbox(
@@ -327,7 +327,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
     chat_question = st.text_input(
         "Ask a question about this sheet (e.g., 'Describe the columns', 'Which columns have null values?')", 
         key="chat_question_input",
-        help="Type a question about the active bank loan dataset. Processing is offline and secure."
+        help="Type a question about the active dataset. Processing is offline and secure."
     )
     if st.button(
         "Send Query", 

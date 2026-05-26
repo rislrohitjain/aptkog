@@ -23,7 +23,7 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
         type=["xlsx", "csv"],
         accept_multiple_files=True,
         key="file_uploader",
-        help="Upload up to 10 files (max 500MB each) containing bank data, loan history, credit files, or lists."
+        help="Upload up to 10 files (max 500MB each) containing data tables, transaction histories, credit files, or lists."
     )
     
     # Process uploads when files are selected
@@ -49,7 +49,7 @@ def render_ingestion_container(api_client: AntigravityAPIClient):
     files_metadata = st.session_state.get("files_metadata", [])
     
     if not files_metadata:
-        st.info("💡 Please upload one or more bank loan spreadsheets to start analytics.")
+        st.info("💡 Please upload one or more spreadsheets to start analytics.")
         return
 
     st.markdown("#### 📂 Uploaded Datasets")
