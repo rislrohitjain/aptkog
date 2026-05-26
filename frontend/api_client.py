@@ -10,9 +10,13 @@ load_dotenv(backend_env)
 
 BACKEND_URL = os.environ.get("BACKEND_URL")
 if not BACKEND_URL:
-    backend_host = os.environ.get("HOST", "127.0.0.1")
-    backend_port = os.environ.get("PORT", "8000")
-    BACKEND_URL = f"http://{backend_host}:{backend_port}"
+    if "SPACE_ID" in os.environ:
+        # In Hugging Face Spaces, the backend runs internally on 127.0.0.1:8000
+        BACKEND_URL = "http://127.0.0.1:8000"
+    else:
+        backend_host = os.environ.get("HOST", "127.0.0.1")
+        backend_port = os.environ.get("PORT", "8000")
+        BACKEND_URL = f"http://{backend_host}:{backend_port}"
 
 class AntigravityAPIClient:
     """

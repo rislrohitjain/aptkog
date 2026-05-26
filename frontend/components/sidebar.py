@@ -1,6 +1,20 @@
 import streamlit as st
 
-@st.dialog("Flow of Application / कार्यप्रवाह")
+def safe_dialog(title: str):
+    if hasattr(st, "dialog"):
+        return st.dialog(title)
+    elif hasattr(st, "experimental_dialog"):
+        return st.experimental_dialog(title)
+    else:
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                st.sidebar.warning(f"⚠️ {title}")
+                with st.sidebar.expander("Details / विवरण", expanded=True):
+                    func(*args, **kwargs)
+            return wrapper
+        return decorator
+
+@safe_dialog("Flow of Application / कार्यप्रवाह")
 def show_flow_dialog():
     col1, col2 = st.columns([3, 1])
     with col2:
@@ -27,7 +41,7 @@ def show_flow_dialog():
             """
         )
 
-@st.dialog("How It's Secure / सुरक्षा विवरण")
+@safe_dialog("How It's Secure / सुरक्षा विवरण")
 def show_security_dialog():
     col1, col2 = st.columns([3, 1])
     with col2:
