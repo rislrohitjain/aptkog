@@ -56,10 +56,25 @@ def render_sidebar():
     """
     Renders a unified modern sidebar with branding, developer attribution, and anchor navigation.
     """
+    try:
+        from PIL import Image
+        import os
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "logo.png")
+        logo_img = Image.open(logo_path)
+        st.sidebar.image(logo_img, use_container_width=True)
+    except Exception:
+        st.sidebar.markdown(
+            """
+            <div style="text-align: center; padding: 10px 0px;">
+                <h2 style="margin: 0; color: #6366F1; font-size: 28px;">⚡ AptKogMatrix</h2>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    
     st.sidebar.markdown(
         """
-        <div style="text-align: center; padding: 10px 0px;">
-            <h2 style="margin: 0; color: #6366F1; font-size: 28px;">⚡ AptKogMatrix</h2>
+        <div style="text-align: center;">
             <p style="margin: 5px 0 15px 0; color: #94A3B8; font-size: 13px; font-weight: 500;">Data Analytics Engine</p>
         </div>
         <hr style="margin-top: 0; margin-bottom: 20px; border-color: #334155;" />

@@ -12,11 +12,18 @@ from frontend.components.filters import render_filters_container
 from frontend.components.pivot import render_pivot_container
 from frontend.components.join import render_join_container
 from frontend.components.diagnostics import render_diagnostics_panel
+from PIL import Image
+
+# Load favicon image if it exists
+try:
+    favicon_img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "favicon.png"))
+except Exception:
+    favicon_img = "⚡"
 
 # Set page configuration for visual elegance
 st.set_page_config(
     page_title="AptKogMatrix - Data Analytics Engine",
-    page_icon="⚡",
+    page_icon=favicon_img,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -91,16 +98,21 @@ def main():
     # Render global sidebar navigation
     render_sidebar()
     
-    # Render Main Page Header
-    st.markdown(
-        """
-        <div>
-            <h1 class="main-title">AptKogMatrix</h1>
-            <p class="subtitle">Secure Offline Data Analytics Engine</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Render Main Page Header with Logo
+    try:
+        logo_img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "logo.png"))
+        st.image(logo_img, width=280)
+        st.markdown('<p class="subtitle" style="margin-top: 10px;">Secure Offline Data Analytics Engine</p>', unsafe_allow_html=True)
+    except Exception:
+        st.markdown(
+            """
+            <div>
+                <h1 class="main-title">AptKogMatrix</h1>
+                <p class="subtitle">Secure Offline Data Analytics Engine</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     
     # Active navigation block from sidebar session state
     active_block = st.session_state.get("active_block", "Ingestion")
