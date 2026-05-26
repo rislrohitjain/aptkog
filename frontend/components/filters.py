@@ -364,8 +364,8 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 plot_bgcolor="#1E293B"
             )
             st.plotly_chart(fig_tree, use_container_width=True)
-            
-            with st.expander("📄 View JSON Schema hierarchy"):
+            show_json = st.checkbox("📄 View JSON Schema hierarchy", value=False, help="Toggle to view the raw JSON tree breakdown.")
+            if show_json:
                 st.json(tree_node)
         else:
             st.info("Configure 'Hierarchical Tree Settings' above and click Apply to generate a tree hierarchy.")
