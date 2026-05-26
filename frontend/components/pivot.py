@@ -85,16 +85,21 @@ def render_pivot_container(api_client: AntigravityAPIClient):
         elif not val_column:
             st.error("Please select a Metric Value column.")
         else:
-            with st.spinner("Processing multi-threaded Polars pivot on backend..."):
-                # Call Pivot API
-                res = api_client.execute_pivot(
-                    filepath=filepath,
-                    sheet_name=sheet_name,
-                    index=row_indices,
-                    columns=column_groupings,
-                    values=val_column,
-                    agg=agg_op
-                )
+            from frontend.components.skeleton import render_skeleton
+            loader_placeholder = st.empty()
+            with loader_placeholder.container():
+                render_skeleton("table", message="⏳ Calculating Pivot Matrix...")
+            
+            # Call Pivot API
+            res = api_client.execute_pivot(
+                filepath=filepath,
+                sheet_name=sheet_name,
+                index=row_indices,
+                columns=column_groupings,
+                values=val_column,
+                agg=agg_op
+            )
+            loader_placeholder.empty()
                 
             if "error" in res:
                 st.error(res["error"])

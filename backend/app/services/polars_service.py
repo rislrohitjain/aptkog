@@ -329,5 +329,5 @@ def convert_df_to_excel_bytes(df: pl.DataFrame) -> bytes:
     """
     out_bio = io.BytesIO()
     # write_excel is built-in for Polars if xlsxwriter is installed
-    df.write_excel(out_bio, table_name="ConsolidatedData")
+    df.write_excel(out_bio, worksheet="ConsolidatedData", table_name="ConsolidatedData")
     return out_bio.getvalue()

@@ -94,6 +94,19 @@ def render_sidebar():
             st.session_state["active_block"] = block_id
             st.rerun()
 
+    st.sidebar.markdown("<hr style='border-color: #334155; margin: 15px 0;' />", unsafe_allow_html=True)
+    st.sidebar.markdown("### 🔄 Operations")
+    col_ref1, col_ref2 = st.sidebar.columns(2)
+    with col_ref1:
+        if st.button("🔄 Refresh", key="btn_refresh", use_container_width=True, help="Reload page layout without losing active data"):
+            st.rerun()
+    with col_ref2:
+        if st.button("🧹 Reset All", key="btn_reset_all", use_container_width=True, help="Wipe all loaded files, query states, and history"):
+            curr_block = st.session_state.get("active_block", "Ingestion")
+            st.session_state.clear()
+            st.session_state["active_block"] = curr_block
+            st.rerun()
+
     st.sidebar.markdown("<hr style='border-color: #334155; margin: 20px 0;' />", unsafe_allow_html=True)
     st.sidebar.markdown("### ℹ️ Info & Security")
     

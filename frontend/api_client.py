@@ -2,7 +2,17 @@ import os
 import requests
 from typing import List, Dict, Any, Optional, Tuple
 
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
+from dotenv import load_dotenv
+
+# Load environment variables from backend/.env if it exists
+backend_env = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "backend", ".env")
+load_dotenv(backend_env)
+
+BACKEND_URL = os.environ.get("BACKEND_URL")
+if not BACKEND_URL:
+    backend_host = os.environ.get("HOST", "127.0.0.1")
+    backend_port = os.environ.get("PORT", "8000")
+    BACKEND_URL = f"http://{backend_host}:{backend_port}"
 
 class AntigravityAPIClient:
     """

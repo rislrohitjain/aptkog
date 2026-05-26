@@ -69,24 +69,32 @@ def render_join_container(api_client: AntigravityAPIClient):
     cache_key_b = (meta_b["filepath"], sheet_b)
 
     if st.session_state.get("join_cache_key_a") != cache_key_a:
-        with st.spinner(f"Reading columns for {file_a_name}..."):
-            res = api_client.filter_dataset(meta_a["filepath"], sheet_a, [])
-            if "error" not in res:
-                st.session_state["join_cols_a"] = list(res.get("schema", {}).keys())
-                st.session_state["join_cache_key_a"] = cache_key_a
-            else:
-                st.error(f"Failed to read File A columns: {res['error']}")
-                return
+        from frontend.components.skeleton import render_skeleton
+        loader_placeholder = st.empty()
+        with loader_placeholder.container():
+            render_skeleton("text", message=f"Reading columns for {file_a_name}...")
+        res = api_client.filter_dataset(meta_a["filepath"], sheet_a, [])
+        loader_placeholder.empty()
+        if "error" not in res:
+            st.session_state["join_cols_a"] = list(res.get("schema", {}).keys())
+            st.session_state["join_cache_key_a"] = cache_key_a
+        else:
+            st.error(f"Failed to read File A columns: {res['error']}")
+            return
 
     if st.session_state.get("join_cache_key_b") != cache_key_b:
-        with st.spinner(f"Reading columns for {file_b_name}..."):
-            res = api_client.filter_dataset(meta_b["filepath"], sheet_b, [])
-            if "error" not in res:
-                st.session_state["join_cols_b"] = list(res.get("schema", {}).keys())
-                st.session_state["join_cache_key_b"] = cache_key_b
-            else:
-                st.error(f"Failed to read File B columns: {res['error']}")
-                return
+        from frontend.components.skeleton import render_skeleton
+        loader_placeholder = st.empty()
+        with loader_placeholder.container():
+            render_skeleton("text", message=f"Reading columns for {file_b_name}...")
+        res = api_client.filter_dataset(meta_b["filepath"], sheet_b, [])
+        loader_placeholder.empty()
+        if "error" not in res:
+            st.session_state["join_cols_b"] = list(res.get("schema", {}).keys())
+            st.session_state["join_cache_key_b"] = cache_key_b
+        else:
+            st.error(f"Failed to read File B columns: {res['error']}")
+            return
 
     cols_a = st.session_state.get("join_cols_a", [])
     cols_b = st.session_state.get("join_cols_b", [])
@@ -110,12 +118,16 @@ def render_join_container(api_client: AntigravityAPIClient):
             index=b_default_key_idx,
             help="Select the matching lookup column in File B (e.g. customer_id, applicant_no)"
         )
-    with col_p3:
-        join_type = st.selectbox(
+        join_type_label = st.selectbox(
             "Join Method", 
-            options=["Left", "Inner", "Outer"], 
+            options=[
+                "Left (VLOOKUP / Keep all rows from File A)", 
+                "Inner (Match Only / Keep only matching rows in both)", 
+                "Outer (All Rows / Keep everything from both)"
+            ], 
             help="Left Join is standard VLOOKUP (keeps all records from Table A and appends data from Table B where matches exist)."
         )
+        join_type = join_type_label.split(" ")[0].lower()
 
     # Column Selection block for File A & File B
     st.markdown("<hr style='margin:15px 0; border-color:#334155;' />", unsafe_allow_html=True)
@@ -174,18 +186,22 @@ def render_join_container(api_client: AntigravityAPIClient):
         elif not select_columns_b:
             st.warning("Please select at least one column to copy from File B.")
         else:
-            with st.spinner("Executing relational merge and generating output Excel file..."):
-                joined_res = api_client.execute_join(
-                    filepath_a=meta_a["filepath"],
-                    sheet_name_a=sheet_a,
-                    filepath_b=meta_b["filepath"],
-                    sheet_name_b=sheet_b,
-                    join_key_a=join_key_a,
-                    join_key_b=join_key_b,
-                    join_type=join_type,
-                    select_columns_a=select_columns_a,
-                    select_columns_b=select_columns_b
-                )
+            from frontend.components.skeleton import render_skeleton
+            loader_placeholder = st.empty()
+            with loader_placeholder.container():
+                render_skeleton("table", message="⏳ Joining datasets...")
+            joined_res = api_client.execute_join(
+                filepath_a=meta_a["filepath"],
+                sheet_name_a=sheet_a,
+                filepath_b=meta_b["filepath"],
+                sheet_name_b=sheet_b,
+                join_key_a=join_key_a,
+                join_key_b=join_key_b,
+                join_type=join_type,
+                select_columns_a=select_columns_a,
+                select_columns_b=select_columns_b
+            )
+            loader_placeholder.empty()
                 
             if isinstance(joined_res, dict) and "error" in joined_res:
                 st.error(joined_res["error"])

@@ -60,14 +60,18 @@ def render_filters_container(api_client: AntigravityAPIClient):
 
     # Fetch schema details from session state if available, or fetch it via filter
     if "filter_response" not in st.session_state or st.session_state.get("last_filtered_sheet") != (filepath, sheet_name):
-        with st.spinner("Analyzing columns..."):
-            res = api_client.filter_dataset(filepath, sheet_name, [])
-            if "error" not in res:
-                st.session_state["filter_response"] = res
-                st.session_state["last_filtered_sheet"] = (filepath, sheet_name)
-            else:
-                st.error(res["error"])
-                return
+        from frontend.components.skeleton import render_skeleton
+        loader_placeholder = st.empty()
+        with loader_placeholder.container():
+            render_skeleton("table", message="⏳ Analyzing columns...")
+        res = api_client.filter_dataset(filepath, sheet_name, [])
+        loader_placeholder.empty()
+        if "error" not in res:
+            st.session_state["filter_response"] = res
+            st.session_state["last_filtered_sheet"] = (filepath, sheet_name)
+        else:
+            st.error(res["error"])
+            return
 
     filter_res = st.session_state.get("filter_response", {})
     schema = filter_res.get("schema", {})
@@ -182,20 +186,28 @@ def render_filters_container(api_client: AntigravityAPIClient):
         use_container_width=True,
         help="Click to execute the query conditions, K-Means clustering, and hierarchical calculations."
     ):
-        with st.spinner("Applying universal filter and updating views..."):
-            res = api_client.filter_dataset(
-                filepath=filepath,
-                sheet_name=sheet_name,
-                filters=st.session_state["filters_list"],
-                tree_group_cols=selected_tree_cols,
-                cluster_cols=selected_cluster_cols,
-                cluster_count=cluster_cnt
-            )
-            if "error" not in res:
-                st.session_state["filter_response"] = res
-                st.success("Analysis views updated successfully!")
-            else:
-                st.error(res["error"])
+        from frontend.components.skeleton import render_skeleton
+        loader_placeholder = st.empty()
+        with loader_placeholder.container():
+            col_l1, col_l2 = st.columns(2)
+            with col_l1:
+                render_skeleton("table", message="⏳ Processing Table View...")
+            with col_l2:
+                render_skeleton("graph", message="⏳ Processing Graph View...")
+        res = api_client.filter_dataset(
+            filepath=filepath,
+            sheet_name=sheet_name,
+            filters=st.session_state["filters_list"],
+            tree_group_cols=selected_tree_cols,
+            cluster_cols=selected_cluster_cols,
+            cluster_count=cluster_cnt
+        )
+        loader_placeholder.empty()
+        if "error" not in res:
+            st.session_state["filter_response"] = res
+            st.success("Analysis views updated successfully!")
+        else:
+            st.error(res["error"])
 
     # Load updated filter response
     filter_res = st.session_state.get("filter_response", {})
@@ -260,7 +272,7 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 )
             with col_g4:
                 chart_type = st.selectbox(
-                    "Chart Type", ["Scatter", "Bar", "Line", "Histogram"],
+                    "Chart Type", ["Scatter", "Bar", "Line", "Histogram", "Pie", "Donut", "Area"],
                     help="Select visual representation type."
                 )
             with col_g5:
@@ -304,6 +316,20 @@ def render_filters_container(api_client: AntigravityAPIClient):
                 fig = px.line(df_plot, x=x_axis, y=y_axis_col, color=color_param, title=f"Line Chart: {y_axis_col} vs {x_axis}")
             elif chart_type == "Histogram" and x_axis:
                 fig = px.histogram(df_plot, x=x_axis, y=y_axis_col if agg_type != "None (Raw Records)" else None, color=color_param, title=f"Distribution of {x_axis}")
+            elif chart_type == "Pie" and x_axis:
+                if agg_type == "None (Raw Records)":
+                    df_pie = df_plot.groupby(x_axis).size().reset_index(name="Record Count")
+                    fig = px.pie(df_pie, names=x_axis, values="Record Count", title=f"Pie Chart: Record Count by {x_axis}")
+                elif y_axis_col:
+                    fig = px.pie(df_plot, names=x_axis, values=y_axis_col, title=f"Pie Chart: {y_axis_col} by {x_axis}")
+            elif chart_type == "Donut" and x_axis:
+                if agg_type == "None (Raw Records)":
+                    df_pie = df_plot.groupby(x_axis).size().reset_index(name="Record Count")
+                    fig = px.pie(df_pie, names=x_axis, values="Record Count", hole=0.4, title=f"Donut Chart: Record Count by {x_axis}")
+                elif y_axis_col:
+                    fig = px.pie(df_plot, names=x_axis, values=y_axis_col, hole=0.4, title=f"Donut Chart: {y_axis_col} by {x_axis}")
+            elif chart_type == "Area" and x_axis and y_axis_col:
+                fig = px.area(df_plot, x=x_axis, y=y_axis_col, color=color_param, title=f"Area Chart: {y_axis_col} vs {x_axis}")
                 
             if fig:
                 # Dark template integration for Plotly Graph
@@ -367,8 +393,12 @@ def render_filters_container(api_client: AntigravityAPIClient):
         help="Click to submit the query to the offline LangChain AI data analyst."
     ):
         if chat_question.strip():
-            with st.spinner("LangChain analyzing dataset schema and metadata..."):
-                chat_res = api_client.ask_analyst(filepath, sheet_name, chat_question)
+            from frontend.components.skeleton import render_skeleton
+            loader_placeholder = st.empty()
+            with loader_placeholder.container():
+                render_skeleton("text", message="🤖 Analyst is thinking...")
+            chat_res = api_client.ask_analyst(filepath, sheet_name, chat_question)
+            loader_placeholder.empty()
                 
             if "error" in chat_res:
                 st.error(chat_res["error"])

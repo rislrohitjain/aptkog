@@ -23,10 +23,10 @@
           ]
         },
         "url": {
-          "raw": "http://localhost:8000/api/upload",
+          "raw": "http://172.18.177.164:8000/api/upload",
           "protocol": "http",
           "host": [
-            "localhost"
+            "172.18.177.164"
           ],
           "port": "8000",
           "path": [
@@ -54,10 +54,10 @@
           "raw": "{\n  \"filepath\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name\": \"Q1\",\n  \"filters\": [\n    {\n      \"column\": \"Country\",\n      \"operator\": \"Like\",\n      \"value\": \"%germany%\"\n    },\n    {\n      \"column\": \"Revenue\",\n      \"operator\": \">=\",\n      \"value\": 5000\n    },\n    {\n      \"column\": \"Email\",\n      \"operator\": \"reg_expr\",\n      \"value\": \"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}\"\n    }\n  ],\n  \"tree_group_cols\": [\n    \"Region\",\n    \"Country\"\n  ],\n  \"cluster_cols\": [\n    \"Revenue\",\n    \"UnitsSold\"\n  ],\n  \"cluster_count\": 3\n}"
         },
         "url": {
-          "raw": "http://localhost:8000/api/filter",
+          "raw": "http://172.18.177.164:8000/api/filter",
           "protocol": "http",
           "host": [
-            "localhost"
+            "172.18.177.164"
           ],
           "port": "8000",
           "path": [
@@ -85,10 +85,10 @@
           "raw": "{\n  \"filepath\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name\": \"Q1\",\n  \"index\": [\n    \"Region\",\n    \"Country\"\n  ],\n  \"columns\": [\n    \"Category\"\n  ],\n  \"values\": \"Revenue\",\n  \"agg\": \"Sum\"\n}"
         },
         "url": {
-          "raw": "http://localhost:8000/api/pivot",
+          "raw": "http://172.18.177.164:8000/api/pivot",
           "protocol": "http",
           "host": [
-            "localhost"
+            "172.18.177.164"
           ],
           "port": "8000",
           "path": [
@@ -116,10 +116,10 @@
           "raw": "{\n  \"filepath_a\": \"./temp_uploads/sales_data.xlsx\",\n  \"sheet_name_a\": \"Q1\",\n  \"filepath_b\": \"./temp_uploads/customer_profiles.xlsx\",\n  \"sheet_name_b\": \"Customers\",\n  \"join_key_a\": \"CustomerID\",\n  \"join_key_b\": \"CustID\",\n  \"join_type\": \"left\",\n  \"select_columns_b\": [\n    \"CustomerName\",\n    \"Email\",\n    \"Segment\"\n  ]\n}"
         },
         "url": {
-          "raw": "http://localhost:8000/api/join",
+          "raw": "http://172.18.177.164:8000/api/join",
           "protocol": "http",
           "host": [
-            "localhost"
+            "172.18.177.164"
           ],
           "port": "8000",
           "path": [
@@ -137,10 +137,10 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "http://localhost:8000/api/diagnostics",
+          "raw": "http://172.18.177.164:8000/api/diagnostics",
           "protocol": "http",
           "host": [
-            "localhost"
+            "172.18.177.164"
           ],
           "port": "8000",
           "path": [

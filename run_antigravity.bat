@@ -29,16 +29,28 @@ if errorlevel 1 (
 )
 echo [SUCCESS] Dependencies installed successfully.
 
+:: 2.5. Update environment IP address config
+echo [INFO] Detecting current local IP and updating configurations...
+call venv\Scripts\python.exe update_ip.py
+
+:: Read updated HOST from backend/.env
+set APP_HOST=127.0.0.1
+if exist backend\.env (
+    for /f "usebackq tokens=1,2 delims==" %%i in ("backend\.env") do (
+        if "%%i"=="HOST" set APP_HOST=%%j
+    )
+)
+
 :: 3. Launch Backend in a new window
 echo [INFO] Launching Backend API server (FastAPI)...
-start "Antigravity 2.0 Backend" cmd /k "call venv\Scripts\activate && uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+start "Antigravity 2.0 Backend" cmd /k "call venv\Scripts\activate && uvicorn backend.app.main:app --host %APP_HOST% --port 8000"
 
 :: 4. Launch Frontend in a new window
 echo [INFO] Launching Frontend UI server (Streamlit)...
-start "Antigravity 2.0 Frontend" cmd /k "call venv\Scripts\activate && streamlit run frontend/app.py --server.port 8501 --server.address 0.0.0.0"
+start "Antigravity 2.0 Frontend" cmd /k "call venv\Scripts\activate && streamlit run frontend/app.py --server.port 8501 --server.address %APP_HOST%"
 
 echo ===================================================
 echo 🚀 Launch commands executed.
-echo    - Backend URL: http://127.0.0.1:8000
-echo    - Frontend URL: http://127.0.0.1:8501
+echo    - Backend URL: http://%APP_HOST%:8000
+echo    - Frontend URL: http://%APP_HOST%:8501
 echo ===================================================
