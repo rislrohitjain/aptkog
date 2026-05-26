@@ -258,6 +258,14 @@ def run_pivot_engine(df: pl.DataFrame, index: List[str], columns: List[str], val
     }
     agg_func = agg_map.get(agg.lower(), "sum")
     
+    # Cast values column to Float64 for math ops to avoid str errors (e.g. `sum` operation not supported for dtype `str`)
+    if agg_func in ["sum", "mean", "max", "min"]:
+        try:
+            # We cast to Float64 with strict=False to silently turn non-numeric values into null
+            df = df.with_columns(pl.col(values).cast(pl.Float64, strict=False))
+        except Exception as e:
+            logger.warning(f"Failed to cast pivot values column '{values}' to Float64: {e}")
+    
     # Polars pivot expects a single column for 'on'
     # If multiple grouping columns are specified, we pick the first one or concatenate them
     pivot_on = columns[0]
