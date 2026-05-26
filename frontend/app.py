@@ -28,6 +28,18 @@ st.markdown(
         /* Import Outfit Google Font */
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
         
+        /* Hide default Streamlit decoration elements & header space */
+        #MainMenu {visibility: hidden; display: none !important;}
+        footer {visibility: hidden; display: none !important;}
+        header {visibility: hidden; display: none !important;}
+        [data-testid="stHeader"] {display: none !important;}
+        
+        .main .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+            margin-top: 0px !important;
+        }
+        
         html, body, [class*="css"] {
             font-family: 'Outfit', sans-serif;
             background-color: #0F172A !important;
@@ -113,8 +125,11 @@ def main():
         render_join_container(api_client)
         
     # Infrastructure Diagnostics & Local Privacy Block
-    with st.expander("⚙️ Infrastructure Diagnostic Panel", expanded=(active_block == "Diagnostics")):
-        render_diagnostics_panel(api_client)
+    import os
+    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"]
+    if not hide_tech:
+        with st.expander("⚙️ Infrastructure Diagnostic Panel", expanded=(active_block == "Diagnostics")):
+            render_diagnostics_panel(api_client)
 
     # Render Sticky Developer Attribution Footer
     st.markdown(
@@ -122,7 +137,7 @@ def main():
         <hr style="margin-top: 40px; border-color: #334155;" />
         <div style="text-align: center; padding: 15px 0 30px 0; color: #94A3B8; font-size: 13px;">
             <p style="margin: 0;"><strong>AptKogMatrix</strong> - Data Analytics Engine</p>
-            <p style="margin: 5px 0 0 0;">Developer Attribution: <a href="https://rohitjain-resume.vercel.app/" target="_blank" style="color: #6366F1; text-decoration: none; font-weight: 600;">Rohit Jain</a> | Senior Python Software Architect</p>
+            <p style="margin: 5px 0 0 0;">Developer Attribution: <a href="https://rohitjain-resume.vercel.app/" target="_blank" style="color: #6366F1; text-decoration: none; font-weight: 600;">Rohit Jain</a> | Senior Software Architect</p>
         </div>
         """,
         unsafe_allow_html=True

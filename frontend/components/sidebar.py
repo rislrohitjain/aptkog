@@ -73,14 +73,18 @@ def render_sidebar():
     if "active_block" not in st.session_state:
         st.session_state["active_block"] = "Ingestion"
         
+    import os
+    hide_tech = os.environ.get("HIDE_TECH_INFO", "False").lower() in ["true", "1", "yes"]
+
     # Navigation buttons
     nav_options = {
         "📥 Data Ingestion": ("Ingestion", "Upload Excel or CSV files and choose the active workspace sheet."),
         "🔍 Universal Filter & Tri-View": ("Filter", "Query ledgers, run K-Means credit clustering, and view tree structures."),
         "📊 Dynamic Pivot Engine": ("Pivot", "Group and aggregate amounts by branch, status, or officer."),
-        "🔗 Dataset Builder (Join)": ("Join", "Perform relation joins between client lists and credit reports using a key column."),
-        "⚙️ Diagnostics & Privacy": ("Diagnostics", "Check local memory usage, Polars thread diagnostics, and server health.")
+        "🔗 Dataset Builder (Join)": ("Join", "Perform relation joins between client lists and credit reports using a key column.")
     }
+    if not hide_tech:
+        nav_options["⚙️ Diagnostics & Privacy"] = ("Diagnostics", "Check local memory usage, thread diagnostics, and server health.")
     
     for label, (block_id, tooltip) in nav_options.items():
         is_active = st.session_state["active_block"] == block_id
@@ -136,7 +140,7 @@ def render_sidebar():
             <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: bold; color: #F8FAFC;">
                 <a href="https://rohitjain-resume.vercel.app/" target="_blank" style="color: #F8FAFC; text-decoration: none;">Rohit Jain</a>
             </p>
-            <p style="margin: 2px 0 0 0; font-size: 11px; color: #94A3B8;">Senior Python Software Architect</p>
+            <p style="margin: 2px 0 0 0; font-size: 11px; color: #94A3B8;">Senior Software Architect</p>
         </div>
         """,
         unsafe_allow_html=True

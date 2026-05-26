@@ -53,7 +53,7 @@ def render_pivot_container(api_client: AntigravityAPIClient):
             "📂 Column Groupings (Horizontal Columns)",
             options=[c for c in columns if c not in row_indices],
             default=[columns[1]] if len(columns) > 1 else [],
-            help="Select columns to expand horizontally (e.g. status, approval_stage). (Uses first selected column in Polars)."
+            help="Select columns to expand horizontally (e.g. status, approval_stage). (Uses first selected column for grouping)."
         )
         
     with col_p2:
@@ -76,7 +76,7 @@ def render_pivot_container(api_client: AntigravityAPIClient):
         "📊 Execute Pivot Aggregation", 
         type="primary", 
         use_container_width=True,
-        help="Click to run the multi-threaded Polars pivot operation on your selected rows and columns."
+        help="Click to run the multi-threaded pivot operation on your selected rows and columns."
     ):
         if not row_indices:
             st.error("Please select at least one Row Index column.")
