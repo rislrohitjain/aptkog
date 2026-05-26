@@ -61,7 +61,7 @@ def render_sidebar():
         import os
         logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", "logo.png")
         logo_img = Image.open(logo_path)
-        st.sidebar.image(logo_img, use_container_width=True)
+        st.sidebar.image(logo_img, width=140)
     except Exception:
         st.sidebar.markdown(
             """
