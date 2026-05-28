@@ -253,14 +253,19 @@ def render_filters_container(api_client: AntigravityAPIClient):
             if "Remarks" not in df_table.columns:
                 df_table.insert(0, "Remarks", "")
                 
+            # Config column_config and disabled lists dynamically based on actual columns present
+            col_config = {}
+            disabled_cols = []
+            if "row_index" in df_table.columns:
+                col_config["row_index"] = None
+                disabled_cols.append("row_index")
+                
             # Render editable dataframe
             edited_df = st.data_editor(
                 df_table,
                 use_container_width=True,
-                column_config={
-                    "row_index": None  # Hide row_index from user view
-                },
-                disabled=["row_index"],
+                column_config=col_config,
+                disabled=disabled_cols if disabled_cols else None,
                 key="table_editor"
             )
             
@@ -271,13 +276,17 @@ def render_filters_container(api_client: AntigravityAPIClient):
                     updates = []
                     for idx_str, changes in edited_rows.items():
                         idx = int(idx_str)
-                        row_index_val = int(df_table.iloc[idx]["row_index"])
-                        for col_name, new_val in changes.items():
-                            updates.append({
-                                "row_index": row_index_val,
-                                "column": col_name,
-                                "value": new_val
-                            })
+                        if "row_index" in df_table.columns:
+                            row_index_val = int(df_table.iloc[idx]["row_index"])
+                            for col_name, new_val in changes.items():
+                                updates.append({
+                                    "row_index": row_index_val,
+                                    "column": col_name,
+                                    "value": new_val
+                                })
+                        else:
+                            st.error("Error: Cannot save edits. 'row_index' column is missing from this dataset.")
+                            break
                     
                     if updates:
                         # Call API to save to server
@@ -326,47 +335,50 @@ def render_filters_container(api_client: AntigravityAPIClient):
                     )
                 
                 if st.button("🚀 Apply Autofill & Save", use_container_width=True):
-                    fill_updates = []
-                    for i in range(len(df_table)):
-                        orig_row_idx = int(df_table.iloc[i]["row_index"])
-                        curr_val = df_table.iloc[i][col_to_fill]
-                        
-                        # Determine if we should fill this cell
-                        should_fill = False
-                        if fill_mode == "All Rows":
-                            should_fill = True
-                        else:
-                            # Empty Cells Only (check for None, NaN, empty string)
-                            should_fill = pd.isna(curr_val) or str(curr_val).strip() == ""
-                            
-                        if should_fill:
-                            fill_updates.append({
-                                "row_index": orig_row_idx,
-                                "column": col_to_fill,
-                                "value": fill_value
-                            })
-                            
-                    if fill_updates:
-                        with st.spinner("💾 Applying bulk autofill to server..."):
-                            save_res = api_client.update_remarks(filepath, sheet_name, fill_updates)
-                        if "error" in save_res:
-                            st.error(save_res["error"])
-                        else:
-                            st.toast(f"Successfully autofilled {len(fill_updates)} cells!", icon="✅")
-                            # Refetch filtered data
-                            res = api_client.filter_dataset(
-                                filepath=filepath,
-                                sheet_name=sheet_name,
-                                filters=st.session_state["filters_list"],
-                                tree_group_cols=selected_tree_cols,
-                                cluster_cols=selected_cluster_cols,
-                                cluster_count=cluster_cnt
-                            )
-                            if "error" not in res:
-                                st.session_state["filter_response"] = res
-                            st.rerun()
+                    if "row_index" not in df_table.columns:
+                        st.error("Error: 'row_index' column is missing from this dataset. Cannot apply bulk autofill.")
                     else:
-                        st.info("No cells matched the autofill criteria.")
+                        fill_updates = []
+                        for i in range(len(df_table)):
+                            orig_row_idx = int(df_table.iloc[i]["row_index"])
+                            curr_val = df_table.iloc[i][col_to_fill]
+                            
+                            # Determine if we should fill this cell
+                            should_fill = False
+                            if fill_mode == "All Rows":
+                                should_fill = True
+                            else:
+                                # Empty Cells Only (check for None, NaN, empty string)
+                                should_fill = pd.isna(curr_val) or str(curr_val).strip() == ""
+                                
+                            if should_fill:
+                                fill_updates.append({
+                                    "row_index": orig_row_idx,
+                                    "column": col_to_fill,
+                                    "value": fill_value
+                                })
+                                
+                        if fill_updates:
+                            with st.spinner("💾 Applying bulk autofill to server..."):
+                                save_res = api_client.update_remarks(filepath, sheet_name, fill_updates)
+                            if "error" in save_res:
+                                st.error(save_res["error"])
+                            else:
+                                st.toast(f"Successfully autofilled {len(fill_updates)} cells!", icon="✅")
+                                # Refetch filtered data
+                                res = api_client.filter_dataset(
+                                    filepath=filepath,
+                                    sheet_name=sheet_name,
+                                    filters=st.session_state["filters_list"],
+                                    tree_group_cols=selected_tree_cols,
+                                    cluster_cols=selected_cluster_cols,
+                                    cluster_count=cluster_cnt
+                                )
+                                if "error" not in res:
+                                    st.session_state["filter_response"] = res
+                                st.rerun()
+                        else:
+                            st.info("No cells matched the autofill criteria.")
             
             # Utility Actions Section
             st.markdown("---")
