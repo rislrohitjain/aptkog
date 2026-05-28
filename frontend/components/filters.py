@@ -313,7 +313,8 @@ def render_filters_container(api_client: AntigravityAPIClient):
                             st.rerun()
             
             # Bulk Autofill Section
-            with st.expander("⚡ Bulk Autofill Utility", expanded=False):
+            st.markdown("##### ⚡ Bulk Autofill Utility")
+            with st.container(border=True):
                 col_fill1, col_fill2, col_fill3 = st.columns([2, 2, 2])
                 with col_fill1:
                     col_to_fill = st.selectbox(
