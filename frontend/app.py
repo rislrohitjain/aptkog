@@ -144,7 +144,7 @@ def main():
     # Render Main Page Header with Logo
     try:
         logo_img = Image.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "logo.png"))
-        st.image(logo_img, width=160)
+        st.image(logo_img, width=280)
         st.markdown('<p class="subtitle" style="margin-top: 10px;">Secure Offline Data Analytics Engine</p>', unsafe_allow_html=True)
     except Exception:
         st.markdown(
