@@ -40,6 +40,20 @@ def load_excel_sheet(filepath: str, sheet_name: str) -> pl.DataFrame:
             logger.warning(f"Calamine engine failed, falling back to openpyxl: {e}")
             df = pl.read_excel(filepath, sheet_name=sheet_name, engine="openpyxl")
     
+    # Add row_index to map modifications back to original file
+    if "row_index" not in df.columns:
+        df = df.with_row_index("row_index")
+    
+    # Ensure Remarks column is at the very beginning (index 0)
+    if "Remarks" not in df.columns:
+        df = df.insert_column(0, pl.Series("Remarks", [""] * len(df), dtype=pl.Utf8))
+    else:
+        # Cast to Utf8 to ensure user edits of remarks don't have type issues
+        df = df.with_columns(pl.col("Remarks").cast(pl.Utf8))
+        # Move to first column
+        cols = ["Remarks"] + [c for c in df.columns if c != "Remarks"]
+        df = df.select(cols)
+
     # Cache the dataframe
     # Limit cache size to prevent memory leaks with large datasets
     if len(_DATAFRAME_CACHE) >= 5:

@@ -237,8 +237,165 @@ def render_filters_container(api_client: AntigravityAPIClient):
         table_rows = filter_res.get("table_data", [])
         if table_rows:
             df_table = pd.DataFrame(table_rows)
+            st.markdown(
+                """
+                <div style="background-color: #1E293B; border-radius: 6px; padding: 10px; border-left: 4px solid #3B82F6; margin-bottom: 15px;">
+                    <p style="margin: 0; font-size: 13px; color: #94A3B8;">
+                        💡 <b>Pro-Tip:</b> You can double-click cells to edit them, or copy/paste multiple cells directly using <b>Ctrl+C</b> / <b>Ctrl+V</b> from external sheets like Excel!
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
             st.markdown(f"*Showing first 500 matching records out of {filtered:,}*")
-            st.dataframe(df_table, use_container_width=True)
+            
+            # Ensure Remarks column is in the dataframe
+            if "Remarks" not in df_table.columns:
+                df_table.insert(0, "Remarks", "")
+                
+            # Render editable dataframe
+            edited_df = st.data_editor(
+                df_table,
+                use_container_width=True,
+                column_config={
+                    "row_index": None  # Hide row_index from user view
+                },
+                disabled=["row_index"],
+                key="table_editor"
+            )
+            
+            # Check for changes in session state
+            if "table_editor" in st.session_state:
+                edited_rows = st.session_state["table_editor"].get("edited_rows", {})
+                if edited_rows:
+                    updates = []
+                    for idx_str, changes in edited_rows.items():
+                        idx = int(idx_str)
+                        row_index_val = int(df_table.iloc[idx]["row_index"])
+                        for col_name, new_val in changes.items():
+                            updates.append({
+                                "row_index": row_index_val,
+                                "column": col_name,
+                                "value": new_val
+                            })
+                    
+                    if updates:
+                        # Call API to save to server
+                        with st.spinner("💾 Saving remarks to server..."):
+                            save_res = api_client.update_remarks(filepath, sheet_name, updates)
+                        if "error" in save_res:
+                            st.error(save_res["error"])
+                        else:
+                            st.toast("📝 Remarks saved successfully to the server file!", icon="✅")
+                            # Clear the edit queue from state to prevent infinite loop/re-saves
+                            st.session_state["table_editor"]["edited_rows"] = {}
+                            
+                            # Refetch filtered data with new remarks
+                            res = api_client.filter_dataset(
+                                filepath=filepath,
+                                sheet_name=sheet_name,
+                                filters=st.session_state["filters_list"],
+                                tree_group_cols=selected_tree_cols,
+                                cluster_cols=selected_cluster_cols,
+                                cluster_count=cluster_cnt
+                            )
+                            if "error" not in res:
+                                st.session_state["filter_response"] = res
+                            st.rerun()
+            
+            # Bulk Autofill Section
+            with st.expander("⚡ Bulk Autofill Utility", expanded=False):
+                col_fill1, col_fill2, col_fill3 = st.columns([2, 2, 2])
+                with col_fill1:
+                    col_to_fill = st.selectbox(
+                        "Column to Fill", 
+                        options=[c for c in df_table.columns if c != "row_index"],
+                        help="Select the column you want to autofill."
+                    )
+                with col_fill2:
+                    fill_value = st.text_input(
+                        "Fill Value", 
+                        placeholder="Type value to fill...",
+                        help="Enter the value to populate the chosen column."
+                    )
+                with col_fill3:
+                    fill_mode = st.radio(
+                        "Fill Mode", 
+                        ["Empty Cells Only", "All Rows"],
+                        help="Choose whether to fill only empty cells or overwrite all cells in the column."
+                    )
+                
+                if st.button("🚀 Apply Autofill & Save", use_container_width=True):
+                    fill_updates = []
+                    for i in range(len(df_table)):
+                        orig_row_idx = int(df_table.iloc[i]["row_index"])
+                        curr_val = df_table.iloc[i][col_to_fill]
+                        
+                        # Determine if we should fill this cell
+                        should_fill = False
+                        if fill_mode == "All Rows":
+                            should_fill = True
+                        else:
+                            # Empty Cells Only (check for None, NaN, empty string)
+                            should_fill = pd.isna(curr_val) or str(curr_val).strip() == ""
+                            
+                        if should_fill:
+                            fill_updates.append({
+                                "row_index": orig_row_idx,
+                                "column": col_to_fill,
+                                "value": fill_value
+                            })
+                            
+                    if fill_updates:
+                        with st.spinner("💾 Applying bulk autofill to server..."):
+                            save_res = api_client.update_remarks(filepath, sheet_name, fill_updates)
+                        if "error" in save_res:
+                            st.error(save_res["error"])
+                        else:
+                            st.toast(f"Successfully autofilled {len(fill_updates)} cells!", icon="✅")
+                            # Refetch filtered data
+                            res = api_client.filter_dataset(
+                                filepath=filepath,
+                                sheet_name=sheet_name,
+                                filters=st.session_state["filters_list"],
+                                tree_group_cols=selected_tree_cols,
+                                cluster_cols=selected_cluster_cols,
+                                cluster_count=cluster_cnt
+                            )
+                            if "error" not in res:
+                                st.session_state["filter_response"] = res
+                            st.rerun()
+                    else:
+                        st.info("No cells matched the autofill criteria.")
+            
+            # Utility Actions Section
+            st.markdown("---")
+            col_act1, col_act2 = st.columns(2)
+            
+            with col_act1:
+                try:
+                    with open(filepath, "rb") as f:
+                        file_bytes = f.read()
+                    st.download_button(
+                        label="📥 Download Updated Dataset (Excel/CSV)",
+                        data=file_bytes,
+                        file_name=filename,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" if filename.lower().endswith(".xlsx") else "text/csv",
+                        use_container_width=True,
+                        help="Download the updated file from the server containing your remarks."
+                    )
+                except Exception as e:
+                    st.error(f"Error loading file for download: {e}")
+                    
+            with col_act2:
+                if st.button("🔄 Restart Work with Updated Remarks", use_container_width=True, help="Clear filters and reload the updated dataset to start fresh."):
+                    st.session_state["filters_list"] = []
+                    if "filter_response" in st.session_state:
+                        del st.session_state["filter_response"]
+                    if "last_filtered_sheet" in st.session_state:
+                        del st.session_state["last_filtered_sheet"]
+                    st.toast("Workspace reset with updated remarks!", icon="🔄")
+                    st.rerun()
         else:
             st.info("No records matched the filter criteria.")
             

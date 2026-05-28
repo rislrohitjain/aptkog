@@ -172,3 +172,21 @@ class AntigravityAPIClient:
         except requests.exceptions.RequestException as e:
             err_msg = response.json().get("detail", str(e)) if 'response' in locals() and response else str(e)
             return {"error": f"LangChain semantic lookup failed: {err_msg}"}
+
+    def update_remarks(self, filepath: str, sheet_name: str, updates: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Saves user-modified Remarks back into the Excel/CSV file on the server.
+        """
+        url = f"{self.base_url}/api/update_remarks"
+        payload = {
+            "filepath": filepath,
+            "sheet_name": sheet_name,
+            "updates": updates
+        }
+        try:
+            response = requests.post(url, json=payload, timeout=60)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            err_msg = response.json().get("detail", str(e)) if 'response' in locals() and response else str(e)
+            return {"error": f"Updating remarks failed: {err_msg}"}
